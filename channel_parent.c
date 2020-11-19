@@ -16,10 +16,18 @@
 
 void handle_child_termination(const int reader, const int writer);
 
-int main(void)
+int main(int argc, char const *argv[])
 {
     int p1_channel, p2_channel;
-    char *args[6];
+
+    char *args[7];
+    
+    if (argc < 2)
+    {
+        perror("Insufficient arguments");
+        exit(EXIT_FAILURE);
+    }
+
     p1_channel = fork();
     if (p1_channel == -1)
     {
@@ -33,7 +41,8 @@ int main(void)
         args[2] = P1_SEM_DEST_KEY;
         args[3] = P1_SHM_SOURCE_KEY;
         args[4] = P1_SHM_DEST_KEY;
-        args[5] = NULL;
+        args[5] = argv[1];
+        args[6] = NULL;
         execvp("/home/pavlos/vsc/c/OSProject/channel", args);
     }
     else
@@ -51,7 +60,8 @@ int main(void)
             args[2] = P2_SEM_DEST_KEY;
             args[3] = P2_SHM_SOURCE_KEY;
             args[4] = P2_SHM_DEST_KEY;
-            args[5] = NULL;
+            args[5] = argv[1];
+            args[6] = NULL;
             execvp("/home/pavlos/vsc/c/OSProject/channel", args);
         }
         else

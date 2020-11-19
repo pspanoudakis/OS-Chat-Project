@@ -25,7 +25,7 @@ void sigquit_handler(int signum)
     shmdt(shmdest);
     shmdt(shmsrc);
     shmctl(shmsrcid, IPC_RMID, 0);
-    semctl(shmsrcid, 0, IPC_RMID, 0);
+    semctl(semsrcid, 0, IPC_RMID, 0);
     shmctl(shmdestid, IPC_RMID, 0);
     semctl(semdestid, 0, IPC_RMID, 0);
     free(ops);
@@ -37,7 +37,6 @@ int main(int argc, char const *argv[])
     pid_t child_id;
     union semun args;
     signal(SIGQUIT, sigquit_handler);
-    char* temp;
     // Using 2 semaphores
 
     key_t sem_source_key = (key_t)atoi(argv[1]);
@@ -107,9 +106,8 @@ int main(int argc, char const *argv[])
             }
             else
             {
-                write(STDOUT_FILENO, "Rejecting message", strlen("Rejecting message"));
-            }
-            
+                //write(STDOUT_FILENO, "Rejecting message\n", strlen("Rejecting message\n"));
+            }            
         }
         else
         {

@@ -62,7 +62,7 @@ int main(void)
     }    
 }
 
-void handle_child_termination(const int reader, const int writer)
+void handle_child_termination(const int encrypt, const int decrypt)
 {
     int child = wait(NULL);
     
@@ -71,12 +71,12 @@ void handle_child_termination(const int reader, const int writer)
         perror("wait() error");
         exit(EXIT_FAILURE);
     }
-    else if (child == reader)
+    else if (child == encrypt)
     {
-        kill(writer, SIGQUIT);
+        kill(decrypt, SIGQUIT);
     }
-    else if (child == writer)
+    else if (child == decrypt)
     {
-        kill(reader, SIGQUIT);
+        kill(encrypt, SIGQUIT);
     }
 }

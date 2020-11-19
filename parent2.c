@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
+#define WRITER_SHM_DEST_KEY "2031"
+#define WRITTER_SEM_DEST_KEY "2018"
+#define READER_SHM_SOURCE_KEY "2032"
+#define READER_SEM_SOURCE_KEY "2017"
+
 void handle_child_termination(const int reader, const int writer);
 
 int main(void)
