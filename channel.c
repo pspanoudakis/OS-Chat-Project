@@ -45,6 +45,7 @@ int main(int argc, char const *argv[])
     key_t sem_dest_key = (key_t)atoi(argv[2]);
     key_t shm_source_key = (key_t)atoi(argv[3]);
     key_t shm_dest_key = (key_t)atoi(argv[4]);
+    int chance = atoi(argv[5]);
 
     semdestid = semget(sem_dest_key, 2, IPC_CREAT|PERMS);
     semsrcid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
@@ -95,10 +96,16 @@ int main(int argc, char const *argv[])
             // Writting to destination shared memory
             sem_down(semdestid, ops, 1);
             memcpy(shmdest, msg, strlen(msg) + 1 + MD5_DIGEST_LENGTH);
+            if ((rand() % 100) < chance)
+            {
+                //write(STDOUT_FILENO, "Noise Added\n", strlen("Noise Added\n"));
+                add_noise(shmdest);
+            }
             sem_up(semdestid, ops, 0);
         }
         else
         {
+            // An exit message will not be modified
             sem_down(semdestid, ops, 1);
             memcpy(shmdest, msg, strlen(msg) + 1);
             sem_up(semdestid, ops, 0);

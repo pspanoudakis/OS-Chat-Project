@@ -4,6 +4,11 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
+#define WRITER_SHM_DEST_KEY "2027"
+#define WRITTER_SEM_DEST_KEY "2022"
+#define READER_SHM_SOURCE_KEY "2025"
+#define READER_SEM_SOURCE_KEY "2024"
+
 void handle_child_termination(const int reader, const int writer);
 
 int main(void)
@@ -19,8 +24,8 @@ int main(void)
     else if (writer_child == 0)
     {
         args[0] = "writer";
-        args[1] = "2027";
-        args[2] = "2022";
+        args[1] = WRITER_SHM_DEST_KEY;
+        args[2] = WRITTER_SEM_DEST_KEY;
         args[3] = NULL;
         execvp("/home/pavlos/vsc/c/OSProject/writer", args);
     }
@@ -35,8 +40,8 @@ int main(void)
         else if (reader_child == 0)
         {
             args[0] = "reader";
-            args[1] = "2025";
-            args[2] = "2024";
+            args[1] = READER_SHM_SOURCE_KEY;
+            args[2] = READER_SEM_SOURCE_KEY;
             args[3] = NULL;
             execvp("/home/pavlos/vsc/c/OSProject/reader", args);
         }
