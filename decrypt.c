@@ -28,6 +28,7 @@ void sigquit_handler(int signum)
     semctl(semsrcid, 0, IPC_RMID, 0);
     shmctl(shmdestid, IPC_RMID, 0);
     semctl(semdestid, 0, IPC_RMID, 0);
+
     free(ops);
     exit(EXIT_SUCCESS);
 }
@@ -72,7 +73,6 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    srand(time(NULL));
     ops = malloc(sizeof(struct sembuf));
     msg = malloc(1);
     msg[0] = '\0';
@@ -85,7 +85,8 @@ int main(int argc, char const *argv[])
         memcpy(msg, shmsrc, strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
 
         sem_up(semsrcid, ops, 1);
-        if (memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0)
+        if ( (memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0)
+        && (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) != 0) )
         {
             // No exit message
             /*

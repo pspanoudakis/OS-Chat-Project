@@ -48,6 +48,8 @@ int main(void)
         else
         {
             handle_child_termination(reader_child, writer_child);
+            //wait(NULL);
+            //wait(NULL);
             exit(EXIT_SUCCESS);
         }        
     }    
@@ -62,12 +64,14 @@ void handle_child_termination(const int reader, const int writer)
         perror("wait() error");
         exit(EXIT_FAILURE);
     }
+    // Check which child has terminated
     else if (child == reader)
     {
+        // Send a signal to writer, since it is waiting for keyboard input and cannot exit on its own.
         kill(writer, SIGQUIT);
     }
     else if (child == writer)
     {
-        kill(reader, SIGQUIT);
+        // On the other hand, reader can exit on its own so do nothing.
     }
 }

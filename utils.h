@@ -2,6 +2,7 @@
 
 #define MAX_INPUT_SIZE 100
 #define EXIT_MESSAGE "exit"
+#define RESEND_MESSAGE "resend"
 
 union semun
 {

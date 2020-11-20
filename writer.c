@@ -68,17 +68,16 @@ int main(int argc, char const *argv[])
         perror("Failed to attach\n");
         exit(EXIT_FAILURE);
     }
+    // Make stdout unbuffered
     setbuf(stdout, NULL);
-    // Parent/Producer process
 
-    srand(time(NULL));
+    // Parent/Producer process
     ops = malloc(sizeof(struct sembuf));
     msg = malloc(1);
     msg[0] = '\0';
     while ( strcmp(msg, EXIT_MESSAGE) != 0 )
     {
         free(msg);
-        //msg = get_line();
         get_line(&msg);
         sem_down(semid, ops, 1);
         

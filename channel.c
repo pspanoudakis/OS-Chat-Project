@@ -14,7 +14,6 @@
 
 #define SHMSIZE 100
 #define PERMS 0660
-#define EXIT_MESSAGE "exit"
 
 // Global declerations (in order to be visible from the handler)
 char *msg, *shmsrc, *shmdest;
@@ -91,7 +90,8 @@ int main(int argc, char const *argv[])
         memcpy(msg, shmsrc, strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
 
         sem_up(semsrcid, ops, 1);
-        if (memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0)
+        if ( (memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0) 
+            && (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) != 0) )
         {
             // Writting to destination shared memory
             sem_down(semdestid, ops, 1);
@@ -105,7 +105,7 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            // An exit message will not be modified
+            // An exit or resend message will not be modified
             sem_down(semdestid, ops, 1);
             memcpy(shmdest, msg, strlen(msg) + 1);
             sem_up(semdestid, ops, 0);

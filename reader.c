@@ -18,7 +18,7 @@ int semid, shmid;
 char* msg, *shmem;
 struct sembuf *ops;
 
-void sigquit_handler(int signum)
+void quit(int signum)
 {
     shmdt(shmem);
     shmctl(shmid, IPC_RMID, 0);
@@ -41,7 +41,7 @@ int main(int argc, char const *argv[])
     key_t shm_source_key = (key_t)atoi(argv[1]);
     key_t sem_source_key = (key_t)atoi(argv[2]);
 
-    signal(SIGQUIT, sigquit_handler);
+    signal(SIGQUIT, quit);
 
     semid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
     if (semid == -1)
@@ -68,6 +68,7 @@ int main(int argc, char const *argv[])
         perror("Failed to attach\n");
         exit(EXIT_FAILURE);
     }
+    // Make stdout unbuffered
     setbuf(stdout, NULL);
 
     // Child/Consumer process
@@ -77,7 +78,8 @@ int main(int argc, char const *argv[])
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
-        sem_down(semid, ops, 0);
+        if (sem_down(semid, ops, 0) == -1) { quit(SIGQUIT); }   // If the operation was not succesful, the semaphore
+                                                                // has probably been deleted, so terminate
 
         printf("Just Read: %s\n", shmem);
         msg = malloc(strlen(shmem) + 1);
