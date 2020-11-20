@@ -135,6 +135,12 @@ int main(int argc, char const *argv[])
     shmdt(shmdest);
     shmctl(shmdestid, IPC_RMID, 0);
     semctl(semdestid, 0, IPC_RMID, 0);
+    shmdt(resendshm);
+    shmctl(resendshmid, IPC_RMID, 0);
+    semctl(resendsemid, 0, IPC_RMID, 0);
+    shmdt(sendbackshm);
+    shmctl(sendbackshmid, IPC_RMID, 0);
+    semctl(sendbacksemid, 0, IPC_RMID, 0);
     free(msg);
     free(ops);
     exit(EXIT_SUCCESS);
