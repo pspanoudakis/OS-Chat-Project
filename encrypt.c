@@ -94,16 +94,22 @@ int main(int argc, char const *argv[])
         sem_up(semsrcid, ops, 1);
 
         sem_down(semdestid, ops, 1);
-        if (strcmp(msg, EXIT_MESSAGE) != 0)
+        if (strcmp(msg, EXIT_MESSAGE) == 0)
+        {
+            strcpy(shmdest, msg);
+        }
+        else if (strcmp(msg, RESEND_MESSAGE) == 0)
+        {
+            write(STDOUT_FILENO, "Resending last message\n", strlen("Resending last message\n") + 1);
+            // "resend" the last message wrote in shared memory.
+            // the shared memory still contains this message, so no need to re-write it.
+        }        
+        else
         {
             memcpy(shmdest, msg, strlen(msg) + 1);
             hashed = md5_hash(msg);
             memcpy(shmdest + strlen(msg) + 1, hashed, MD5_DIGEST_LENGTH);
             free(hashed);
-        }
-        else
-        {
-            strcpy(shmdest, msg);
         }
         sem_up(semdestid, ops, 0);
     }
