@@ -8,11 +8,9 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <signal.h>
+#include <openssl/md5.h>
 
 #include "utils.h"
-
-#define SHMSIZE 100
-#define PERMS 0660
 
 struct sembuf *ops;
 int semid, shmid;
@@ -79,7 +77,14 @@ int main(int argc, char const *argv[])
     {
         free(msg);
         get_line(&msg);
-        sem_down(semid, ops, 1);
+        if (strlen(msg) > (SHMSIZE - MD5_DIGEST_LENGTH - 1))
+        {
+            printf("Message must be up to %d characters.", (SHMSIZE - MD5_DIGEST_LENGTH - 1));
+            msg = malloc(1);
+            msg[0] = '\0';
+            continue;
+        }
+        if (sem_down(semid, ops, 1) == -1){ continue; }
         
         printf("Writting: %s\n", msg);
         strcpy(shmem, msg);

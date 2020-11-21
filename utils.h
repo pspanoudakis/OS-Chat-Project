@@ -1,8 +1,10 @@
 /* File: utils.h */
 
 #define MAX_INPUT_SIZE 100
-#define EXIT_MESSAGE "exit"
+#define EXIT_MESSAGE "TERM"
 #define RESEND_MESSAGE "resend"
+#define PERMS 0660
+#define SHMSIZE 100
 
 union semun
 {

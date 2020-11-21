@@ -12,9 +12,6 @@
 
 #include "utils.h"
 
-#define SHMSIZE 100
-#define PERMS 0660
-
 // Global declerations (in order to be visible from the handler)
 char *msg, *shmsrc, *shmdest, *resendshm, *sendbackshm;
 struct sembuf *ops;
@@ -105,9 +102,9 @@ int main(int argc, char const *argv[])
         }
         else if (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) == 0)
         {
-            sem_down(sendbacksemid, ops, 1);
+            if (sem_down(sendbacksemid, ops, 1) == -1) { continue; }
             memcpy(sendbackshm, msg, strlen(msg) + 1);
-            write(STDOUT_FILENO, "Informing encrypter\n", strlen("Informing encrypter\n") + 1);
+            write(STDOUT_FILENO, "Retransmission request received\n", strlen("Retransmission request received\n") + 1);
             sem_up(sendbacksemid, ops, 0);       
         }
         else
@@ -122,9 +119,9 @@ int main(int argc, char const *argv[])
             }
             else
             {
-                sem_down(resendsemid, ops, 1);
+                if (sem_down(resendsemid, ops, 1) == -1) { continue; }
                 memcpy(resendshm, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1);
-                write(STDOUT_FILENO, "Asking back\n", strlen("Asking back\n") + 1);
+                write(STDOUT_FILENO, "Message corrupted. Asking for retransmission\n", strlen("Message corrupted. Asking for retransmission\n") + 1);
                 sem_up(resendsemid, ops, 0);
             }
         }        

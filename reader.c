@@ -11,9 +11,6 @@
 
 #include "utils.h"
 
-#define SHMSIZE 100
-#define PERMS 0660
-
 int semid, shmid;
 char* msg, *shmem;
 struct sembuf *ops;

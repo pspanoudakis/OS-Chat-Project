@@ -12,9 +12,6 @@
 
 #include "utils.h"
 
-#define SHMSIZE 100
-#define PERMS 0660
-
 char *msg, *shmsrc, *shmdest;
 struct sembuf *ops;
 int semsrcid, shmsrcid, semdestid, shmdestid;
@@ -93,15 +90,15 @@ int main(int argc, char const *argv[])
 
         sem_up(semsrcid, ops, 1);
 
-        sem_down(semdestid, ops, 1);
+        if (sem_down(semdestid, ops, 1) == -1) { continue; }
         if (strcmp(msg, EXIT_MESSAGE) == 0)
         {
             strcpy(shmdest, msg);
         }
         else if (strcmp(msg, RESEND_MESSAGE) == 0)
         {
-            write(STDOUT_FILENO, "Resending last message\n", strlen("Resending last message\n") + 1);
-            // "resend" the last message wrote in shared memory.
+            write(STDOUT_FILENO, "Retransmitting last message\n", strlen("Retransmitting last message\n") + 1);
+            // "retransmit" the last message wrote in shared memory.
             // the shared memory still contains this message, so no need to re-write it.
         }        
         else

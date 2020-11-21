@@ -48,8 +48,6 @@ int main(void)
         else
         {
             handle_child_termination(reader_child, writer_child);
-            //wait(NULL);
-            //wait(NULL);
             exit(EXIT_SUCCESS);
         }        
     }    

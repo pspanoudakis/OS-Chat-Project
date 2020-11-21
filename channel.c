@@ -12,9 +12,6 @@
 
 #include "utils.h"
 
-#define SHMSIZE 100
-#define PERMS 0660
-
 // Global declerations (in order to be visible from the handler)
 char *msg, *shmsrc, *shmdest;
 struct sembuf *ops;
