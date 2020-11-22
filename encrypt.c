@@ -23,7 +23,7 @@ char *msg, *shmsrc, *shmdest;
 struct sembuf *ops;
 int semsrcid, shmsrcid, semdestid, shmdestid;
 
-void sigquit_handler(int signum)
+void quit(int signum)
 {
     shmdt(shmsrc);
     shmctl(shmsrcid, IPC_RMID, 0);
@@ -51,7 +51,7 @@ int main(int argc, char const *argv[])
     key_t shm_source_key = (key_t)atoi(argv[3]);
     key_t shm_dest_key = (key_t)atoi(argv[4]);
 
-    signal(SIGQUIT, sigquit_handler);
+    signal(SIGQUIT, quit);
 
     semsrcid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
     semdestid = semget(sem_dest_key, 2, IPC_CREAT|PERMS);
@@ -93,7 +93,7 @@ int main(int argc, char const *argv[])
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
-        if (sem_down(semsrcid, ops, 0) == -1) { sigquit_handler(SIGQUIT); }
+        if (sem_down(semsrcid, ops, 0) == -1) { quit(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc)+1);
         if (msg == NULL) { malloc_error_exit(); }
@@ -101,7 +101,7 @@ int main(int argc, char const *argv[])
 
         sem_up(semsrcid, ops, 1);
 
-        if (sem_down(semdestid, ops, 1) == -1) { sigquit_handler(SIGQUIT); }
+        if (sem_down(semdestid, ops, 1) == -1) { quit(SIGQUIT); }
         if (strcmp(msg, EXIT_MESSAGE) == 0)
         {
             strcpy(shmdest, msg);

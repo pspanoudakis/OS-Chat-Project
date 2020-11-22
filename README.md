@@ -42,21 +42,22 @@ The special message passes through the channel and is received this time by P1's
 The exact same procedure takes place when a message from P2 to P1 is modified by the channel (see the green arrows in the diagram).
 
 ### Terminating
-Another special message is TERM, which indicates the termination of all the processes. Each process is designed to terminate after the handling of that message. But since the two paths are independent, if P1 sends an exit message to P2, only half the running processes will stop immediately. To stop the rest of the processes, the parent processes are used. When a child process terminates, the parent will know (because `wait(NULL)`is called after the children are created) and will send a `SIGQUIT` to the other child. To ensure that each child is terminated properly (without memory leaks or active semaphores and attached shared memory pointers) a `SIGQUIT` handler is used. The only exception here is the `reader` child of P1 and P2 which will terminate as soon as it realizes that the semaphore used for reading a message no longer exists (to avoid random messages at the end of the execution).
+Another special message is TERM, which indicates the termination of all the processes. Each process is designed to terminate after the handling of that message. But since the two paths are independent, if P1 sends an exit message to P2, only half the running processes will stop immediately. Consequently, all child processes check if a semaphore operation fails, which will happen if a termination message has been sent. When an operation fails, the process is terminated smoothly (freeing any allocated memory, detaching pointers to shared memory segments and deleting semaphores).  
+The only exception is `writer` (when it hasn't read the TERM message itself), since it waits for user input and cannot exit on its own. When `reader` exits, the parent will know (because `wait(NULL)`is called after the children are created) and will send a `SIGQUIT` to `writer`. In `writer`, a `SIGQUIT` handler is used to make sure the process exits smoothly like the others.
 
 ### Compiling & Executing
 Running `make` will create all the needed executables. gcc normally displays a warning ("assignment discards ‘const’ qualifier") 2 times while compiling `channel_parent.c`. It is disabled in the Makefile, but can easily be enabled back.  
 `parent1` and `parent2` should be executed first, in different terminals. Then `channel_parent`, `encrypter1` and `encrypter2` need to be executed. `encrypter1` and `encrypter2` should **always** be executed last, because they don't initiallize the semaphores they use themselves. `channel_parent`, `encrypter1` and `encrypter2` could be executed in one terminal (in backround) but it would be more preferable to use different terminals since `encrypt` and `decrypt` print retransmission messages.  
 `channel_parent` needs to be executed along with the possibility argument, otherwise it will stop.  
 After all the above have been executed, just type anything in `parent1` or `parent2` terminal and it will show up in the other's. Note that a message may be modified more than 1 time in a row.  
-To terminate, type "TERM" (or whatever exit message you may have defined in `utils.h`), either in `parent1` or `parent2` terminal, and everything will stop.  
+To terminate, type "TERM" (or whatever exit message has been defined in `utils.h`), either in `parent1` or `parent2` terminal, and everything will stop.  
 To delete the executables, run `make clean`.
 
 ### Performance & other details
-Messages usually appear immediately in the destination terminal, even if a retransmission has taken place (unless you chose a very big possibility for modification in channel). You can check for output messages in `encrypter1` and `encrypter2` terminals to find out.  
-All processes have been extensively checked for memory leaks using valgrind. Occasionally, in `channel` or `decrypt`, it is reported that there is one more memory allocation than the free's, and there are some "still reachable" bytes in the heap. No other leaks have been reported.  
+Messages should appear immediately in the destination terminal, even if a retransmission has taken place (unless the possibility for modification in channel is very big). You can check for output messages in `encrypter1` and `encrypter2` terminals to find out.  
+All processes have been extensively checked for memory leaks using valgrind, and no leaks have being reported in multiple executions in different scenarios.
 Semaphores and shared memory segments are properly deleted, and any attached pointers are dettached without problem.  
-The default shared memory size is 100 bytes but can be changed in `utils.h`. While reading input, `writer` will check if the length of the message along with the MD5 digest length exeed this limit, and will reject the input message in such case.
+The default shared memory size is 100 bytes but can be changed in `utils.h`. While reading input, `writer` will check if the length of the message along with the MD5 digest length exceed this limit, and will reject the input message in such case.
 
 ### Development
-Developed and tested in WSL Ubuntu 20.04, using Visual Studio Code. Succesfully tested in DIT Lab Ubuntu 16.04 as well.
+Developed and extensively tested in WSL Ubuntu 20.04, using Visual Studio Code. Succesfully tested in DIT Lab Ubuntu 16.04 as well.

@@ -24,7 +24,7 @@ char *msg, *shmsrc, *shmdest;
 struct sembuf *ops;
 int semsrcid, shmsrcid, semdestid, shmdestid;
 
-void sigquit_handler(int signum)
+void quit(int signum)
 {
     shmdt(shmdest);
     shmdt(shmsrc);
@@ -40,7 +40,7 @@ int main(int argc, char const *argv[])
 {
     pid_t child_id;
     union semun args;
-    signal(SIGQUIT, sigquit_handler);
+    signal(SIGQUIT, quit);
     char* temp;
     // Using 2 semaphores
 
@@ -93,7 +93,7 @@ int main(int argc, char const *argv[])
     {
         free(msg);
         // Reading from source shared memory
-        if ( sem_down(semsrcid, ops, 0) == -1) { sigquit_handler(SIGQUIT); }
+        if ( sem_down(semsrcid, ops, 0) == -1) { quit(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
         if (msg == NULL) { malloc_error_exit(); }

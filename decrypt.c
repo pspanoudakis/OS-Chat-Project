@@ -24,7 +24,7 @@ char *msg, *shmsrc, *shmdest, *resendshm, *sendbackshm;
 struct sembuf *ops;
 int semsrcid, shmsrcid, semdestid, shmdestid, resendsemid, resendshmid, sendbacksemid, sendbackshmid;
 
-void sigquit_handler(int signum)
+void quit(int signum)
 {
     shmdt(shmdest);
     shmdt(shmsrc);
@@ -47,7 +47,7 @@ int main(int argc, char const *argv[])
 {
     pid_t child_id;
     union semun args;
-    signal(SIGQUIT, sigquit_handler);
+    signal(SIGQUIT, quit);
 
     if (argc < 9)
     {
@@ -104,7 +104,7 @@ int main(int argc, char const *argv[])
     while ( memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0 )
     {
         free(msg);
-        if ( sem_down(semsrcid, ops, 0) == -1) { sigquit_handler(SIGQUIT); }
+        if ( sem_down(semsrcid, ops, 0) == -1) { quit(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
         if (msg == NULL) { malloc_error_exit(); }
@@ -119,7 +119,7 @@ int main(int argc, char const *argv[])
         }
         else if (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) == 0)
         {
-            if (sem_down(sendbacksemid, ops, 1) == -1) { sigquit_handler(SIGQUIT); }
+            if (sem_down(sendbacksemid, ops, 1) == -1) { quit(SIGQUIT); }
             memcpy(sendbackshm, msg, strlen(msg) + 1);
             write(STDOUT_FILENO, "Retransmission request received\n", strlen("Retransmission request received\n") + 1);
             sem_up(sendbacksemid, ops, 0);       
@@ -136,7 +136,7 @@ int main(int argc, char const *argv[])
             }
             else
             {
-                if (sem_down(resendsemid, ops, 1) == -1) { sigquit_handler(SIGQUIT); }
+                if (sem_down(resendsemid, ops, 1) == -1) { quit(SIGQUIT); }
                 memcpy(resendshm, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1);
                 write(STDOUT_FILENO, "Message corrupted. Asking for retransmission\n", strlen("Message corrupted. Asking for retransmission\n") + 1);
                 sem_up(resendsemid, ops, 0);
