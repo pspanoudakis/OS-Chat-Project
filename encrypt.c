@@ -1,3 +1,10 @@
+/*
+ * File: encrypt.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Child process in ENC1 and ENC2, used for encoding messages.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -86,7 +93,7 @@ int main(int argc, char const *argv[])
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
-        sem_down(semsrcid, ops, 0);        
+        if (sem_down(semsrcid, ops, 0) == -1) { sigquit_handler(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc)+1);
         if (msg == NULL) { malloc_error_exit(); }
@@ -94,7 +101,7 @@ int main(int argc, char const *argv[])
 
         sem_up(semsrcid, ops, 1);
 
-        if (sem_down(semdestid, ops, 1) == -1) { continue; }
+        if (sem_down(semdestid, ops, 1) == -1) { sigquit_handler(SIGQUIT); }
         if (strcmp(msg, EXIT_MESSAGE) == 0)
         {
             strcpy(shmdest, msg);

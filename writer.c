@@ -1,3 +1,10 @@
+/*
+ * File: writer.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Child process in P1 and P2, used for reading from stdin.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -89,7 +96,7 @@ int main(int argc, char const *argv[])
             msg[0] = '\0';
             continue;
         }
-        if (sem_down(semid, ops, 1) == -1){ continue; }
+        if (sem_down(semid, ops, 1) == -1){ sigquit_handler(SIGQUIT); }
         
         printf("Writting: %s\n", msg);
         strcpy(shmem, msg);

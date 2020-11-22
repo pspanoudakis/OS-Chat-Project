@@ -1,3 +1,10 @@
+/* 
+ * File: utils.h
+ * Pavlos Spanoudakis (sdi1800184)
+ * 
+ * Contains implementations for useful and widely used functions.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -25,15 +32,15 @@ void get_line(char **buffer)
 {
     int c, count;
     
-    *buffer = malloc(1);
+    *buffer = malloc(1);                                        // The string will be stored directly to the specified buffer
     if (buffer == NULL)  { malloc_error_exit(); }
-    (*buffer)[0] = '\0';
+    (*buffer)[0] = '\0';                                        // First, initiallizing it as empty
 
-    count = 1;
+    count = 1;                                                  // Counting already allocated bytes
     while ( (c = getchar()) != '\n' )
     {  
-        *buffer = (char*)realloc(*buffer, count + 1);
-        (*buffer)[count - 1] = c;
+        *buffer = (char*)realloc(*buffer, count + 1);           // Increasing the space by 1 byte
+        (*buffer)[count - 1] = c;                               // Storing the new letter
         (*buffer)[count] = '\0';
         count++;
     }
@@ -49,9 +56,9 @@ int check_md5(const char *data, const char *hash)
     md5_hash = malloc(MD5_DIGEST_LENGTH);
     if (md5_hash == NULL) { malloc_error_exit(); }
 
-    MD5(data, strlen(data) + 1, md5_hash);
+    MD5(data, strlen(data) + 1, md5_hash);                      // Finding the hashcode for the specified data
 
-    if ( memcmp(md5_hash, hash, MD5_DIGEST_LENGTH) == 0 )
+    if ( memcmp(md5_hash, hash, MD5_DIGEST_LENGTH) == 0 )       // And comparing it with the given one
     {
         valid = 1;
     }

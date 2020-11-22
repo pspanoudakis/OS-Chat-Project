@@ -1,3 +1,10 @@
+/*
+ * File: channel.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Child process of CHAN, used for message transmissions and modifications.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -86,7 +93,7 @@ int main(int argc, char const *argv[])
     {
         free(msg);
         // Reading from source shared memory
-        sem_down(semsrcid, ops, 0);
+        if ( sem_down(semsrcid, ops, 0) == -1) { sigquit_handler(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
         if (msg == NULL) { malloc_error_exit(); }

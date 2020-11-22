@@ -1,3 +1,10 @@
+/*
+ * File: decrypt.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Child process in ENC1 and ENC2, used for decoding messages.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -97,7 +104,7 @@ int main(int argc, char const *argv[])
     while ( memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0 )
     {
         free(msg);
-        sem_down(semsrcid, ops, 0);
+        if ( sem_down(semsrcid, ops, 0) == -1) { sigquit_handler(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
         if (msg == NULL) { malloc_error_exit(); }
@@ -112,7 +119,7 @@ int main(int argc, char const *argv[])
         }
         else if (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) == 0)
         {
-            if (sem_down(sendbacksemid, ops, 1) == -1) { continue; }
+            if (sem_down(sendbacksemid, ops, 1) == -1) { sigquit_handler(SIGQUIT); }
             memcpy(sendbackshm, msg, strlen(msg) + 1);
             write(STDOUT_FILENO, "Retransmission request received\n", strlen("Retransmission request received\n") + 1);
             sem_up(sendbacksemid, ops, 0);       
@@ -129,7 +136,7 @@ int main(int argc, char const *argv[])
             }
             else
             {
-                if (sem_down(resendsemid, ops, 1) == -1) { continue; }
+                if (sem_down(resendsemid, ops, 1) == -1) { sigquit_handler(SIGQUIT); }
                 memcpy(resendshm, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1);
                 write(STDOUT_FILENO, "Message corrupted. Asking for retransmission\n", strlen("Message corrupted. Asking for retransmission\n") + 1);
                 sem_up(resendsemid, ops, 0);

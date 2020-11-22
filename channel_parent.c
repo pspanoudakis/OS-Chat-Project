@@ -1,3 +1,10 @@
+/*
+ * File: channel_parent.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Parent process for CHAN.
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,7 +21,6 @@
 #define P2_SHM_DEST_KEY "2026"
 #define P2_SEM_DEST_KEY "2023"
 
-void handle_child_termination(const int reader, const int writer);
 
 int main(int argc, char const *argv[])
 {
@@ -65,27 +71,12 @@ int main(int argc, char const *argv[])
         }
         else
         {
-            handle_child_termination(p2_channel, p1_channel);
+            if ( (wait(NULL) == -1) || (wait(NULL) == -1) )
+            {
+                perror("wait() error");
+                exit(EXIT_FAILURE);
+            }
             exit(EXIT_SUCCESS);
         }        
     }    
-}
-
-void handle_child_termination(const int p2, const int p1)
-{
-    int child = wait(NULL);
-    
-    if (child == -1)
-    {
-        perror("wait() error");
-        exit(EXIT_FAILURE);
-    }
-    else if (child == p2)
-    {
-        kill(p1, SIGQUIT);
-    }
-    else if (child == p1)
-    {
-        kill(p2, SIGQUIT);
-    }
 }

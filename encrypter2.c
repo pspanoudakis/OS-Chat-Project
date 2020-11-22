@@ -1,3 +1,10 @@
+/*
+ * File: encrypter2.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Parent process for ENC2.
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,7 +25,6 @@
 #define ENC_SHM_DEST_KEY "2030"
 #define ENC_SEM_DEST_KEY "2019"
 
-void handle_child_termination(const int reader, const int writer);
 
 int main(void)
 {
@@ -64,27 +70,12 @@ int main(void)
         }
         else
         {
-            handle_child_termination(encrypt_child, decrypt_child);
+            if ( (wait(NULL) == -1) || (wait(NULL) == -1) )
+            {
+                perror("wait() error");
+                exit(EXIT_FAILURE);
+            }
             exit(EXIT_SUCCESS);
         }        
     }    
-}
-
-void handle_child_termination(const int encrypt, const int decrypt)
-{
-    int child = wait(NULL);
-    
-    if (child == 1)
-    {
-        perror("wait() error");
-        exit(EXIT_FAILURE);
-    }
-    else if (child == encrypt)
-    {
-        kill(decrypt, SIGQUIT);
-    }
-    else if (child == decrypt)
-    {
-        kill(encrypt, SIGQUIT);
-    }
 }

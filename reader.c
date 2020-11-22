@@ -1,3 +1,10 @@
+/*
+ * File: reader.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Child process in P1 and P2, used for printing to stdout.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

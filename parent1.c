@@ -1,3 +1,10 @@
+/*
+ * File: parent1.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Parent process for P1.
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +15,7 @@
 #define WRITTER_SEM_DEST_KEY "2022"
 #define READER_SHM_SOURCE_KEY "2025"
 #define READER_SEM_SOURCE_KEY "2024"
+
 
 void handle_child_termination(const int reader, const int writer);
 
