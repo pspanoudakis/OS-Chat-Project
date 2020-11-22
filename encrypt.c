@@ -39,7 +39,6 @@ int main(int argc, char const *argv[])
         perror("Insufficient arguments\n");
         exit(EXIT_FAILURE);
     }
-
     key_t sem_source_key = (key_t)atoi(argv[1]);
     key_t sem_dest_key = (key_t)atoi(argv[2]);
     key_t shm_source_key = (key_t)atoi(argv[3]);
@@ -78,14 +77,19 @@ int main(int argc, char const *argv[])
 
     // Child/Consumer process
     ops = malloc(sizeof(struct sembuf));
+    if (ops == NULL) { malloc_error_exit(); }
+
     msg = malloc(1);
+    if (msg == NULL) { malloc_error_exit(); }
     msg[0] = '\0';
+
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
         sem_down(semsrcid, ops, 0);        
 
         msg = malloc(strlen(shmsrc)+1);
+        if (msg == NULL) { malloc_error_exit(); }
         strcpy(msg, shmsrc);
 
         sem_up(semsrcid, ops, 1);

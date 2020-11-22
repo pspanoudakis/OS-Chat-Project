@@ -41,7 +41,12 @@ int main(int argc, char const *argv[])
     pid_t child_id;
     union semun args;
     signal(SIGQUIT, sigquit_handler);
-    // Using 2 semaphores
+
+    if (argc < 9)
+    {
+        perror("Insufficient arguments\n");
+        exit(EXIT_FAILURE);
+    }
 
     key_t sem_source_key = (key_t)atoi(argv[1]);
     key_t sem_dest_key = (key_t)atoi(argv[2]);
@@ -83,14 +88,19 @@ int main(int argc, char const *argv[])
     }
 
     ops = malloc(sizeof(struct sembuf));
+    if (ops == NULL) { malloc_error_exit(); }
+
     msg = malloc(1);
+    if (msg == NULL) { malloc_error_exit(); }
     msg[0] = '\0';
+
     while ( memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0 )
     {
         free(msg);
         sem_down(semsrcid, ops, 0);
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
+        if (msg == NULL) { malloc_error_exit(); }
         memcpy(msg, shmsrc, strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
 
         sem_up(semsrcid, ops, 1);

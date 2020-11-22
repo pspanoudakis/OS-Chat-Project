@@ -13,6 +13,7 @@ union semun
     unsigned short *array;
 };
 
+void malloc_error_exit(void);
 void get_line(char **buffer);
 char* get_line_buffer(void);
 int check_md5(const char *data, const char *hash);

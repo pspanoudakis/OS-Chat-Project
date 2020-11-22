@@ -34,7 +34,6 @@ int main(int argc, char const *argv[])
         perror("Insufficient arguments\n");
         exit(EXIT_FAILURE);
     }
-
     key_t shm_source_key = (key_t)atoi(argv[1]);
     key_t sem_source_key = (key_t)atoi(argv[2]);
 
@@ -70,8 +69,12 @@ int main(int argc, char const *argv[])
 
     // Child/Consumer process
     ops = malloc(sizeof(struct sembuf));
+    if (ops == NULL) { malloc_error_exit(); }
+
     msg = malloc(1);
+    if (msg == NULL) { malloc_error_exit(); }
     msg[0] = '\0';
+
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
@@ -80,6 +83,7 @@ int main(int argc, char const *argv[])
 
         printf("Just Read: %s\n", shmem);
         msg = malloc(strlen(shmem) + 1);
+        if (msg == NULL) { malloc_error_exit(); }
         strcpy(msg, shmem);
         
         sem_up(semid, ops, 1);

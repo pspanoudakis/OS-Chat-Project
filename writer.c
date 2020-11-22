@@ -30,14 +30,14 @@ int main(int argc, char const *argv[])
 {
     pid_t child_id;
     union semun args;
-    key_t shm_dest_key = (key_t)atoi(argv[1]);
-    key_t sem_dest_key = (key_t)atoi(argv[2]);
 
     if (argc < 3)
     {
         perror("Insufficient arguments\n");
         exit(EXIT_FAILURE);
     }
+    key_t shm_dest_key = (key_t)atoi(argv[1]);
+    key_t sem_dest_key = (key_t)atoi(argv[2]);
 
     signal(SIGQUIT, sigquit_handler);
 
@@ -71,8 +71,12 @@ int main(int argc, char const *argv[])
 
     // Parent/Producer process
     ops = malloc(sizeof(struct sembuf));
+    if (ops == NULL) { malloc_error_exit(); }
+
     msg = malloc(1);
+    if (msg == NULL) { malloc_error_exit(); }
     msg[0] = '\0';
+
     while ( strcmp(msg, EXIT_MESSAGE) != 0 )
     {
         free(msg);
@@ -81,6 +85,7 @@ int main(int argc, char const *argv[])
         {
             printf("Message must be up to %d characters.", (SHMSIZE - MD5_DIGEST_LENGTH - 1));
             msg = malloc(1);
+            if (msg == NULL) { malloc_error_exit(); }
             msg[0] = '\0';
             continue;
         }

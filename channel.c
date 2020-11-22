@@ -74,9 +74,14 @@ int main(int argc, char const *argv[])
     }
 
     srand(time(NULL));
+
     ops = malloc(sizeof(struct sembuf));
+    if (ops == NULL) { malloc_error_exit(); }
+
     msg = malloc(1);
+    if (msg == NULL) { malloc_error_exit(); }
     msg[0] = '\0';
+
     while ( memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0 )
     {
         free(msg);
@@ -84,6 +89,7 @@ int main(int argc, char const *argv[])
         sem_down(semsrcid, ops, 0);
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
+        if (msg == NULL) { malloc_error_exit(); }
         memcpy(msg, shmsrc, strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
 
         sem_up(semsrcid, ops, 1);
@@ -95,7 +101,7 @@ int main(int argc, char const *argv[])
             memcpy(shmdest, msg, strlen(msg) + 1 + MD5_DIGEST_LENGTH);
             if ((rand() % 100) < chance)
             {
-                //write(STDOUT_FILENO, "Noise Added\n", strlen("Noise Added\n"));
+                write(STDOUT_FILENO, "Noise Added\n", strlen("Noise Added\n"));
                 add_noise(shmdest);
             }
             sem_up(semdestid, ops, 0);

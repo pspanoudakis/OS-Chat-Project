@@ -19,7 +19,6 @@ void handle_child_termination(const int reader, const int writer);
 int main(int argc, char const *argv[])
 {
     int p1_channel, p2_channel;
-
     char *args[7];
     
     if (argc < 2)
