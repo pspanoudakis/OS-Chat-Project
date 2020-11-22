@@ -1,10 +1,14 @@
-/* File: utils.h */
+/* 
+ * File: utils.h
+ * Pavlos Spanoudakis (sdi1800184)
+ * 
+ * Contains definitions for useful functions, as well as widely used #define commands.
+ */
 
-#define MAX_INPUT_SIZE 100
-#define EXIT_MESSAGE "TERM"
-#define RESEND_MESSAGE "resend"
-#define PERMS 0660
-#define SHMSIZE 100
+#define EXIT_MESSAGE "TERM"                 // termination message
+#define RESEND_MESSAGE "resend"             // message/signal for retransmission
+#define PERMS 0660                          // permissions for semaphores and shared memory segments
+#define SHMSIZE 100                         // shared memory segment size
 
 union semun
 {
@@ -13,6 +17,7 @@ union semun
     unsigned short *array;
 };
 
+void malloc_error_exit(void);
 void get_line(char **buffer);
 char* get_line_buffer(void);
 int check_md5(const char *data, const char *hash);

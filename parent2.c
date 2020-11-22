@@ -1,3 +1,10 @@
+/*
+ * File: parent2.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Parent process for P2.
+ */
+
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
@@ -8,6 +15,7 @@
 #define WRITTER_SEM_DEST_KEY "2018"
 #define READER_SHM_SOURCE_KEY "2032"
 #define READER_SEM_SOURCE_KEY "2017"
+
 
 void handle_child_termination(const int reader, const int writer);
 
@@ -48,8 +56,6 @@ int main(void)
         else
         {
             handle_child_termination(reader_child, writer_child);
-            //wait(NULL);
-            //wait(NULL);
             exit(EXIT_SUCCESS);
         }        
     }    
@@ -64,6 +70,7 @@ void handle_child_termination(const int reader, const int writer)
         perror("wait() error");
         exit(EXIT_FAILURE);
     }
+    // Check which child has terminated
     else if (child == reader)
     {
         // Send a signal to writer, since it is waiting for keyboard input and cannot exit on its own.

@@ -1,3 +1,10 @@
+/*
+ * File: writer.c
+ * Pavlos Spanoudakis (sdi18000184)
+ * 
+ * Child process in P1 and P2, used for reading from stdin.
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,14 +37,14 @@ int main(int argc, char const *argv[])
 {
     pid_t child_id;
     union semun args;
-    key_t shm_dest_key = (key_t)atoi(argv[1]);
-    key_t sem_dest_key = (key_t)atoi(argv[2]);
 
     if (argc < 3)
     {
         perror("Insufficient arguments\n");
         exit(EXIT_FAILURE);
     }
+    key_t shm_dest_key = (key_t)atoi(argv[1]);
+    key_t sem_dest_key = (key_t)atoi(argv[2]);
 
     signal(SIGQUIT, sigquit_handler);
 
@@ -71,8 +78,12 @@ int main(int argc, char const *argv[])
 
     // Parent/Producer process
     ops = malloc(sizeof(struct sembuf));
+    if (ops == NULL) { malloc_error_exit(); }
+
     msg = malloc(1);
+    if (msg == NULL) { malloc_error_exit(); }
     msg[0] = '\0';
+
     while ( strcmp(msg, EXIT_MESSAGE) != 0 )
     {
         free(msg);
@@ -81,10 +92,11 @@ int main(int argc, char const *argv[])
         {
             printf("Message must be up to %d characters.", (SHMSIZE - MD5_DIGEST_LENGTH - 1));
             msg = malloc(1);
+            if (msg == NULL) { malloc_error_exit(); }
             msg[0] = '\0';
             continue;
         }
-        if (sem_down(semid, ops, 1) == -1){ continue; }
+        if (sem_down(semid, ops, 1) == -1){ sigquit_handler(SIGQUIT); }
         
         printf("Writting: %s\n", msg);
         strcpy(shmem, msg);
