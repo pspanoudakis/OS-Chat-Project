@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -51,7 +50,7 @@ int main(int argc, char const *argv[])
     key_t shm_source_key = (key_t)atoi(argv[3]);
     key_t shm_dest_key = (key_t)atoi(argv[4]);
 
-    signal(SIGQUIT, quit);
+    signal(SIGTERM, quit);
 
     semsrcid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
     semdestid = semget(sem_dest_key, 2, IPC_CREAT|PERMS);
@@ -93,7 +92,7 @@ int main(int argc, char const *argv[])
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
-        if (sem_down(semsrcid, ops, 0) == -1) { quit(SIGQUIT); }
+        if (sem_down(semsrcid, ops, 0) == -1) { quit(SIGTERM); }
 
         msg = malloc(strlen(shmsrc)+1);
         if (msg == NULL) { malloc_error_exit(); }
@@ -101,7 +100,7 @@ int main(int argc, char const *argv[])
 
         sem_up(semsrcid, ops, 1);
 
-        if (sem_down(semdestid, ops, 1) == -1) { quit(SIGQUIT); }
+        if (sem_down(semdestid, ops, 1) == -1) { break; }
         if (strcmp(msg, EXIT_MESSAGE) == 0)
         {
             strcpy(shmdest, msg);
@@ -121,13 +120,6 @@ int main(int argc, char const *argv[])
         }
         sem_up(semdestid, ops, 0);
     }
-    shmdt(shmsrc);
-    shmctl(shmsrcid, IPC_RMID, 0);
-    semctl(semsrcid, 0, IPC_RMID, 0);
-    shmdt(shmdest);
-    shmctl(shmdestid, IPC_RMID, 0);
-    semctl(semdestid, 0, IPC_RMID, 0);
     free(msg);
-    free(ops);
-    exit(EXIT_SUCCESS);
+    quit(SIGTERM);
 }

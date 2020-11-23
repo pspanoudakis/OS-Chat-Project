@@ -7,7 +7,6 @@
 
 #include <unistd.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 
@@ -22,7 +21,7 @@ void handle_child_termination(const int reader, const int writer);
 int main(void)
 {
     int writer_child, reader_child;
-    writer_child = fork();
+    writer_child = fork();                  // creating a child clone to execute writer
     char* args[4];
     if (writer_child == -1)
     {
@@ -31,15 +30,21 @@ int main(void)
     }
     else if (writer_child == 0)
     {
-        args[0] = "writer";
+        args[0] = "writer";                 // setting up required arguments
         args[1] = "2031";
         args[2] = "2018";
         args[3] = NULL;
-        execvp("/home/pavlos/vsc/c/OSProject/writer", args);
+
+        // The clone replaces itself with writer
+        if ( execvp("/home/pavlos/vsc/c/OSProject/writer", args) == -1)
+        {
+            perror("Failed to execute writer. Aborting.\n");
+            exit(EXIT_FAILURE);
+        }
     }
     else
     {
-        reader_child = fork();
+        reader_child = fork();              // creating a child clone to execute reader
         if (reader_child == -1)
         {
             perror("Could not fork 2");
@@ -47,20 +52,28 @@ int main(void)
         }
         else if (reader_child == 0)
         {
-            args[0] = "reader";
+            args[0] = "reader";             // setting up required arguments
             args[1] = "2032";
             args[2] = "2017";
             args[3] = NULL;
-            execvp("/home/pavlos/vsc/c/OSProject/reader", args);
+
+            // The clone replaces itself with reader
+            if ( execvp("/home/pavlos/vsc/c/OSProject/reader", args) )
+            {
+                perror("Failed to execute reader. Aborting.\n");
+                exit(EXIT_FAILURE);
+            }
         }
         else
         {
+            // Parent will reach this point
             handle_child_termination(reader_child, writer_child);
             exit(EXIT_SUCCESS);
         }        
     }    
 }
 
+/* Used by parent to properly handle the children processes. */
 void handle_child_termination(const int reader, const int writer)
 {
     int child = wait(NULL);
@@ -74,7 +87,7 @@ void handle_child_termination(const int reader, const int writer)
     else if (child == reader)
     {
         // Send a signal to writer, since it is waiting for keyboard input and cannot exit on its own.
-        kill(writer, SIGQUIT);
+        kill(writer, SIGTERM);
     }
     else if (child == writer)
     {

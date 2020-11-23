@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -27,15 +26,18 @@ int semsrcid, shmsrcid, semdestid, shmdestid, resendsemid, resendshmid, sendback
 void quit(int signum)
 {
     shmdt(shmdest);
-    shmdt(shmsrc);
-    shmdt(resendshm);
-    shmdt(sendbackshm);
-    shmctl(shmsrcid, IPC_RMID, 0);
-    semctl(semsrcid, 0, IPC_RMID, 0);
     shmctl(shmdestid, IPC_RMID, 0);
     semctl(semdestid, 0, IPC_RMID, 0);
+
+    shmdt(shmsrc);
+    shmctl(shmsrcid, IPC_RMID, 0);
+    semctl(semsrcid, 0, IPC_RMID, 0);
+
+    shmdt(resendshm);
     shmctl(resendshmid, IPC_RMID, 0);
     semctl(resendsemid, 0, IPC_RMID, 0);
+
+    shmdt(sendbackshm);
     shmctl(sendbackshmid, IPC_RMID, 0);
     semctl(sendbacksemid, 0, IPC_RMID, 0);
 
@@ -47,7 +49,7 @@ int main(int argc, char const *argv[])
 {
     pid_t child_id;
     union semun args;
-    signal(SIGQUIT, quit);
+    signal(SIGTERM, quit);
 
     if (argc < 9)
     {
@@ -119,7 +121,7 @@ int main(int argc, char const *argv[])
         }
         else if (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) == 0)
         {
-            if (sem_down(sendbacksemid, ops, 1) == -1) { quit(SIGQUIT); }
+            if (sem_down(sendbacksemid, ops, 1) == -1) { break; }
             memcpy(sendbackshm, msg, strlen(msg) + 1);
             write(STDOUT_FILENO, "Retransmission request received\n", strlen("Retransmission request received\n") + 1);
             sem_up(sendbacksemid, ops, 0);       
@@ -136,26 +138,13 @@ int main(int argc, char const *argv[])
             }
             else
             {
-                if (sem_down(resendsemid, ops, 1) == -1) { quit(SIGQUIT); }
+                if (sem_down(resendsemid, ops, 1) == -1) { break; }
                 memcpy(resendshm, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1);
                 write(STDOUT_FILENO, "Message corrupted. Asking for retransmission\n", strlen("Message corrupted. Asking for retransmission\n") + 1);
                 sem_up(resendsemid, ops, 0);
             }
         }        
     }
-    shmdt(shmsrc);
-    shmctl(shmsrcid, IPC_RMID, 0);
-    semctl(semsrcid, 0, IPC_RMID, 0);
-    shmdt(shmdest);
-    shmctl(shmdestid, IPC_RMID, 0);
-    semctl(semdestid, 0, IPC_RMID, 0);
-    shmdt(resendshm);
-    shmctl(resendshmid, IPC_RMID, 0);
-    semctl(resendsemid, 0, IPC_RMID, 0);
-    shmdt(sendbackshm);
-    shmctl(sendbackshmid, IPC_RMID, 0);
-    semctl(sendbacksemid, 0, IPC_RMID, 0);
     free(msg);
-    free(ops);
-    exit(EXIT_SUCCESS);
+    quit(SIGTERM);
 }

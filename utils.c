@@ -46,7 +46,7 @@ void get_line(char **buffer)
     }
 }
 
-/* Checks if the specified hashcode is indeed the MD5 hashcode
+/* Checks if the specified hashcode is the correct MD5 hashcode
    for the specified character sequence. */
 int check_md5(const char *data, const char *hash)
 {
@@ -109,20 +109,20 @@ int sem_init(int semid, int semnum, int value)
    semops must be a valid pointer to a sembuf. */
 int sem_up(int semid, struct sembuf *semops, int semnum)
 {
-    semops->sem_flg = 0;
+    semops->sem_flg = 0;                    // setting up sembuf properly
     semops->sem_num = semnum;
     semops->sem_op = 1;
 
-    return semop(semid, semops, 1);       // semaphore up
+    return semop(semid, semops, 1);         // semaphore up
 }
 
 /* Locks/Decrements the semaphore, using the operation buffer semops.
    semops must be a valid pointer to a sembuf. */
 int sem_down(int semid, struct sembuf *semops, int semnum)
 {
-    semops->sem_flg = 0;
+    semops->sem_flg = 0;                    // setting up sembuf properly
     semops->sem_num = semnum;
     semops->sem_op = -1;
     
-    return semop(semid, semops, 1);       // semaphore up
+    return semop(semid, semops, 1);         // semaphore down
 }

@@ -55,7 +55,7 @@ To delete the executables, run `make clean`.
 
 ### Performance & other details
 Messages should appear immediately in the destination terminal, even if a retransmission has taken place (unless the possibility for modification in channel is very big). You can check for output messages in `encrypter1` and `encrypter2` terminals to find out.  
-All processes have been extensively checked for memory leaks using valgrind, and no leaks have being reported in multiple executions in different scenarios.
+All processes have been extensively checked for memory leaks using valgrind, and no leaks have being reported in multiple executions and different scenarios.
 Semaphores and shared memory segments are properly deleted, and any attached pointers are dettached without problem.  
 The default shared memory size is 100 bytes but can be changed in `utils.h`. While reading input, `writer` will check if the length of the message along with the MD5 digest length exceed this limit, and will reject the input message in such case.
 
