@@ -1,6 +1,7 @@
 CC = gcc
 
 # Compile options
+# comment-out CFLAGS to re-enable the disabled warning (see README)
 CFLAGS = -Wno-discarded-qualifiers
 LDLIBS = -lcrypto
 

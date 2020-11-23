@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -44,7 +43,7 @@ int main(int argc, char const *argv[])
     key_t shm_source_key = (key_t)atoi(argv[1]);
     key_t sem_source_key = (key_t)atoi(argv[2]);
 
-    signal(SIGQUIT, quit);
+    signal(SIGTERM, quit);
 
     semid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
     if (semid == -1)
@@ -85,7 +84,7 @@ int main(int argc, char const *argv[])
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
-        if (sem_down(semid, ops, 0) == -1) { quit(SIGQUIT); }   // If the operation was not succesful, the semaphore
+        if (sem_down(semid, ops, 0) == -1) { quit(SIGTERM); }   // If the operation was not succesful, the semaphore
                                                                 // has probably been deleted, so terminate
 
         printf("Just Read: %s\n", shmem);
@@ -95,10 +94,7 @@ int main(int argc, char const *argv[])
         
         sem_up(semid, ops, 1);
     }
-    shmdt(shmem);
-    shmctl(shmid, IPC_RMID, 0);
-    semctl(semid, 0, IPC_RMID, 0);
+
     free(msg);
-    free(ops);
-    exit(EXIT_SUCCESS);
+    quit(SIGTERM);
 }

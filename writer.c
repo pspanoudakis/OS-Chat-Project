@@ -8,7 +8,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -23,13 +22,13 @@ struct sembuf *ops;
 int semid, shmid;
 char *msg, *shmem;
 
-void sigquit_handler(int signum)
+void sigterm_handler(int signum)
 {
+    free(msg);
+    free(ops);
     shmdt(shmem);
     shmctl(shmid, IPC_RMID, 0);
     semctl(semid, 0, IPC_RMID, 0);
-    free(msg);
-    free(ops);
     exit(EXIT_SUCCESS);
 }
 
@@ -46,7 +45,7 @@ int main(int argc, char const *argv[])
     key_t shm_dest_key = (key_t)atoi(argv[1]);
     key_t sem_dest_key = (key_t)atoi(argv[2]);
 
-    signal(SIGQUIT, sigquit_handler);
+    signal(SIGTERM, sigterm_handler);
 
     // Using 2 semaphores
     semid = semget(sem_dest_key, 2, IPC_CREAT|PERMS);
@@ -90,23 +89,19 @@ int main(int argc, char const *argv[])
         get_line(&msg);
         if (strlen(msg) > (SHMSIZE - MD5_DIGEST_LENGTH - 1))
         {
-            printf("Message must be up to %d characters.", (SHMSIZE - MD5_DIGEST_LENGTH - 1));
+            printf("Message must be up to %d characters.\n", (SHMSIZE - MD5_DIGEST_LENGTH - 1));
+            free(msg);
             msg = malloc(1);
             if (msg == NULL) { malloc_error_exit(); }
             msg[0] = '\0';
             continue;
         }
-        if (sem_down(semid, ops, 1) == -1){ sigquit_handler(SIGQUIT); }
+        if (sem_down(semid, ops, 1) == -1){ break; }
         
         printf("Writting: %s\n", msg);
         strcpy(shmem, msg);
 
         sem_up(semid, ops, 0);
     }
-    shmdt(shmem);
-    shmctl(shmid, IPC_RMID, 0);
-    semctl(semid, 0, IPC_RMID, 0);
-    free(msg);
-    free(ops);
-    exit(EXIT_SUCCESS);
+    sigterm_handler(SIGTERM);
 }
