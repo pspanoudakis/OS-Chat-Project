@@ -18,11 +18,13 @@
 
 #include "utils.h"
 
-// Global declerations (in order to be visible from the handler)
+// Global declerations (in order to be visible from quit())
 char *msg, *shmsrc, *shmdest, *resendshm, *sendbackshm;
 struct sembuf *ops;
 int semsrcid, shmsrcid, semdestid, shmdestid, resendsemid, resendshmid, sendbacksemid, sendbackshmid;
 
+/* Used for Terminating properly (freeing heap memory, dettaching pointers 
+& deleting semaphores and shared memory segments) */
 void quit(int signum)
 {
     shmdt(shmdest);
@@ -49,6 +51,8 @@ int main(int argc, char const *argv[])
 {
     pid_t child_id;
     union semun args;
+
+    // To terminate smoothly if a SIGTERM is sent
     signal(SIGTERM, quit);
 
     if (argc < 9)
@@ -57,6 +61,7 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Getting semaphore and shared memory keys
     key_t sem_source_key = (key_t)atoi(argv[1]);
     key_t sem_dest_key = (key_t)atoi(argv[2]);
     key_t shm_source_key = (key_t)atoi(argv[3]);
@@ -66,26 +71,29 @@ int main(int argc, char const *argv[])
     key_t sendback_sem_key = (key_t)atoi(argv[7]);
     key_t sendback_shm_key = (key_t)atoi(argv[8]);
 
-    semdestid = semget(sem_dest_key, 2, IPC_CREAT|PERMS);
-    semsrcid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
-    resendsemid = semget(resend_sem_key, 2, IPC_CREAT|PERMS);
-    sendbacksemid = semget(sendback_sem_key, 2, IPC_CREAT|PERMS);
+    semdestid = semget(sem_dest_key, 2, IPC_CREAT|PERMS);               // 2 semaphores to handle shared memory for writing
+    semsrcid = semget(sem_source_key, 2, IPC_CREAT|PERMS);              // to handle shared memory for reading
+    resendsemid = semget(resend_sem_key, 2, IPC_CREAT|PERMS);           // to handle shared memory for sending retransmission requests
+    sendbacksemid = semget(sendback_sem_key, 2, IPC_CREAT|PERMS);       // to handle shared memory for informing `encrypt` about a retransmission request
     if (semdestid == -1 || semsrcid == -1 || resendsemid == -1 || sendbacksemid == -1)
     {
         perror("Failed to get semaphore\n");
         exit(EXIT_FAILURE);
     }
+    // Note that the semaphores should have been created and initiallized before this process starts
+    // (parent1, parent2 and channel_parent *must* have been called first)
 
-    shmdestid = shmget(shm_dest_key, SHMSIZE, IPC_CREAT|PERMS);
-    shmsrcid = shmget(shm_source_key, SHMSIZE, IPC_CREAT|PERMS);
-    resendshmid = shmget(resend_shm_key, SHMSIZE, IPC_CREAT|PERMS);
-    sendbackshmid = shmget(sendback_shm_key, SHMSIZE, IPC_CREAT|PERMS);
+    shmdestid = shmget(shm_dest_key, SHMSIZE, IPC_CREAT|PERMS);         // shared memory for writing
+    shmsrcid = shmget(shm_source_key, SHMSIZE, IPC_CREAT|PERMS);        // shared memory for reading
+    resendshmid = shmget(resend_shm_key, SHMSIZE, IPC_CREAT|PERMS);     // shared memory for sending retransmission requests
+    sendbackshmid = shmget(sendback_shm_key, SHMSIZE, IPC_CREAT|PERMS); // shared memory for informing `encrypt` about a retransmission request
     if (shmdestid == -1 || shmsrcid == -1 || resendshmid == -1 || sendbacksemid == -1)
     {
         perror("Did not get shared memory\n");
         exit(EXIT_FAILURE);
     }
 
+    // Attaching pointers to every shared memory segment
     shmdest = (char*)shmat(shmdestid, (char*)0, 0);
     shmsrc = (char*)shmat(shmsrcid, (char*)0, 0);
     resendshm = (char*)shmat(resendshmid, (char*)0, 0);
@@ -96,31 +104,41 @@ int main(int argc, char const *argv[])
         exit(EXIT_FAILURE);
     }
 
-    ops = malloc(sizeof(struct sembuf));
+    ops = malloc(sizeof(struct sembuf));                                // used for semaphore operations
     if (ops == NULL) { malloc_error_exit(); }
 
-    msg = malloc(1);
+    msg = malloc(1);                                                    // messages will be stored here before being printed
     if (msg == NULL) { malloc_error_exit(); }
+    // Initiallizing msg with a null character so strcmp can be safely called
     msg[0] = '\0';
 
+    // Loop until a termination message has been read
     while ( memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) != 0 )
     {
         free(msg);
+
+        // Quiting if the operation fails (most likely a termination message has been sent from the opposite direction)
         if ( sem_down(semsrcid, ops, 0) == -1) { quit(SIGQUIT); }
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
         if (msg == NULL) { malloc_error_exit(); }
+
+        // Reading from source shared memory
         memcpy(msg, shmsrc, strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
 
         sem_up(semsrcid, ops, 1);
+
         if ( memcmp(msg, EXIT_MESSAGE, strlen(EXIT_MESSAGE) + 1) == 0)
+        // If a termination message has been read, just forward it to destination shared memory
         {
             sem_down(semdestid, ops, 1);
             memcpy(shmdest, msg, strlen(msg) + 1);
             sem_up(semdestid, ops, 0);
         }
         else if (memcmp(msg, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1) == 0)
+        // A retransmission request has been received, so forward it to `encrypter` instead of `reader`
         {
+            // If this operation fails, break instead of calling quit(), so that msg is freed first.
             if (sem_down(sendbacksemid, ops, 1) == -1) { break; }
             memcpy(sendbackshm, msg, strlen(msg) + 1);
             write(STDOUT_FILENO, "Retransmission request received\n", strlen("Retransmission request received\n") + 1);
@@ -128,7 +146,9 @@ int main(int argc, char const *argv[])
         }
         else
         {
+            // No special message has been received, so checking for modifications
             if (check_md5(msg, msg + strlen(msg) + 1))
+            // No modification was detected, so forward the message to destination shared memory
             {                
                 sem_down(semdestid, ops, 1);
 
@@ -137,7 +157,9 @@ int main(int argc, char const *argv[])
                 sem_up(semdestid, ops, 0);
             }
             else
+            // Message modification was detected, so do not forward the message and send a retransmission request
             {
+                // If this operation fails, break instead of calling quit(), so that msg is freed first.
                 if (sem_down(resendsemid, ops, 1) == -1) { break; }
                 memcpy(resendshm, RESEND_MESSAGE, strlen(RESEND_MESSAGE) + 1);
                 write(STDOUT_FILENO, "Message corrupted. Asking for retransmission\n", strlen("Message corrupted. Asking for retransmission\n") + 1);

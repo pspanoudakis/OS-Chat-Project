@@ -19,7 +19,7 @@
 
 #include "utils.h"
 
-// Global declerations (in order to be visible from the handler)
+// Global declerations (in order to be visible from quit())
 char *msg, *shmsrc, *shmdest;
 struct sembuf *ops;
 int semsrcid, shmsrcid, semdestid, shmdestid;
@@ -43,6 +43,8 @@ int main(int argc, char const *argv[])
     pid_t child_id;
     union semun args;
     char* temp;
+
+    // To terminate smoothly if a SIGTERM is sent
     signal(SIGTERM, quit);    
 
     // Getting the keys for semaphores and shared memory
@@ -90,6 +92,7 @@ int main(int argc, char const *argv[])
 
     msg = malloc(1);                                                // messages will be stored here before being forwarded
     if (msg == NULL) { malloc_error_exit(); }
+    // Initiallizing msg with a null character so strcmp can be safely called
     msg[0] = '\0';
 
     // Loop until a termination message has been read
@@ -97,7 +100,7 @@ int main(int argc, char const *argv[])
     {
         free(msg);
         // Reading from source shared memory
-        // Quiting if the operation fails (most likely a termination message has been sent to the opposite direction)
+        // Quiting if the operation fails (most likely a termination message has been sent from the opposite direction)
         if ( sem_down(semsrcid, ops, 0) == -1) { quit(SIGTERM); }
 
         msg = malloc(strlen(shmsrc) + 1 + MD5_DIGEST_LENGTH);
