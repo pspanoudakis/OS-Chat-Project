@@ -17,10 +17,13 @@
 
 #include "utils.h"
 
+// Global declerations (in order to be visible from quit())
 int semid, shmid;
 char* msg, *shmem;
 struct sembuf *ops;
 
+/* Used for Terminating properly (freeing heap memory, dettaching pointers 
+& deleting semaphores and shared memory segments) */
 void quit(int signum)
 {
     shmdt(shmem);
@@ -40,56 +43,65 @@ int main(int argc, char const *argv[])
         perror("Insufficient arguments\n");
         exit(EXIT_FAILURE);
     }
+    // Getting semaphore and shared memory keys
     key_t shm_source_key = (key_t)atoi(argv[1]);
     key_t sem_source_key = (key_t)atoi(argv[2]);
 
+    // To terminate smoothly if a SIGTERM is sent
     signal(SIGTERM, quit);
 
+    // Using 2 semaphores for shared memory handling
     semid = semget(sem_source_key, 2, IPC_CREAT|PERMS);
     if (semid == -1)
     {
         perror("Did not get semaphore\n");
         exit(EXIT_FAILURE);
     }
-
     // Initiallize the first to 0
     sem_init(semid, 0, 0);
     // And the second to 1
     sem_init(semid, 1, 1);
 
+    // Aquiring the shared memory segment for reading
     shmid = shmget(shm_source_key, SHMSIZE, IPC_CREAT|PERMS);
     if (shmid == -1)
     {
         perror("Did not get shared memory\n");
         exit(EXIT_FAILURE);
     }
-
+    // Attaching a pointer to it
     shmem = (char*)shmat(shmid, (char*)0, 0);
     if (shmem == (char*)-1)
     {
         perror("Failed to attach\n");
         exit(EXIT_FAILURE);
     }
+
     // Make stdout unbuffered
     setbuf(stdout, NULL);
 
-    // Child/Consumer process
-    ops = malloc(sizeof(struct sembuf));
+    ops = malloc(sizeof(struct sembuf));                                // used for semaphore operations
     if (ops == NULL) { malloc_error_exit(); }
 
-    msg = malloc(1);
+    msg = malloc(1);                                                    // messages will be stored here before being printed
     if (msg == NULL) { malloc_error_exit(); }
+    // Initiallizing msg with a null character so strcmp can be safely called
     msg[0] = '\0';
 
+    // Loop until a termination message has been read
     while (strcmp(msg, EXIT_MESSAGE) != 0)
     {
         free(msg);
-        if (sem_down(semid, ops, 0) == -1) { quit(SIGTERM); }   // If the operation was not succesful, the semaphore
-                                                                // has probably been deleted, so terminate
+
+        // If the operation is not succesful, a termination message has probably been sent from the opposite direction
+        // which caused the semaphored to be deleted, so terminate
+        if (sem_down(semid, ops, 0) == -1) { quit(SIGTERM); }   
 
         printf("Just Read: %s\n", shmem);
         msg = malloc(strlen(shmem) + 1);
         if (msg == NULL) { malloc_error_exit(); }
+
+        // Reading from source shared memory
         strcpy(msg, shmem);
         
         sem_up(semid, ops, 1);
