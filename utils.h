@@ -17,6 +17,7 @@ union semun
     unsigned short *array;
 };
 
+void exit_failure(const char *msg);
 void malloc_error_exit(void);
 void get_line(char **buffer);
 char* get_line_buffer(void);

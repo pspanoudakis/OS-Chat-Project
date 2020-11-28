@@ -43,7 +43,7 @@ The exact same procedure takes place when a message from P2 to P1 is modified by
 
 ### Terminating
 Another special message is TERM, which indicates the termination of all the processes. Each process is designed to terminate after the handling of that message. But since the two paths are independent, if P1 sends an exit message to P2, only half the running processes will stop immediately. Consequently, all child processes check if a semaphore operation fails, which will happen if a termination message has been sent. When an operation fails, the process is terminated smoothly (freeing any allocated memory, detaching pointers to shared memory segments and deleting semaphores).  
-The only exception is `writer` (when it hasn't read the TERM message itself), since it waits for user input and cannot exit on its own. When `reader` exits, the parent will know (because `wait(NULL)`is called after the children are created) and will send a `SIGQUIT` to `writer`. In `writer`, a `SIGQUIT` handler is used to make sure the process exits smoothly like the others.
+The only exception is `writer` (when it hasn't read the TERM message itself), since it waits for user input and cannot exit on its own. When `reader` exits, the parent will know (because `wait(NULL)`is called after the children are created) and will send a `SIGTERM` to `writer`. In `writer`, a `SIGTERM` handler is used to make sure the process exits properly like the others.
 
 ### Compiling & Executing
 Running `make` will create all the needed executables. gcc normally displays a warning ("assignment discards ‘const’ qualifier") 2 times while compiling `channel_parent.c`. It is disabled in the Makefile, but can easily be enabled back.  
@@ -56,7 +56,7 @@ To delete the executables, run `make clean`.
 ### Performance & other details
 Messages should appear immediately in the destination terminal, even if a retransmission has taken place (unless the possibility for modification in channel is very big). You can check for output messages in `encrypter1` and `encrypter2` terminals to find out.  
 All processes have been extensively checked for memory leaks using valgrind, and no leaks have being reported in multiple executions and different scenarios.
-Semaphores and shared memory segments are properly deleted, and any attached pointers are dettached without problem.  
+Semaphores and shared memory segments are properly deleted, and any attached pointers are dettached without problems.  
 The default shared memory size is 100 bytes but can be changed in `utils.h`. While reading input, `writer` will check if the length of the message along with the MD5 digest length exceed this limit, and will reject the input message in such case.
 
 ### Development

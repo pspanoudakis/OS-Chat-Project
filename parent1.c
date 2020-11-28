@@ -36,7 +36,7 @@ int main(void)
         args[3] = NULL;
 
         // The clone replaces itself with writer
-        if ( execvp("writer", args) == -1)
+        if ( execvp("/home/pavlos/vsc/c/OSProject/writer", args) == -1)
         {
             perror("Failed to execute writer. Aborting.\n");
             exit(EXIT_FAILURE);
@@ -58,7 +58,7 @@ int main(void)
             args[3] = NULL;
 
             // The clone replaces itself with reader
-            if ( execvp("reader", args) )
+            if ( execvp("/home/pavlos/vsc/c/OSProject/reader", args) )
             {
                 perror("Failed to execute reader. Aborting.\n");
                 exit(EXIT_FAILURE);
@@ -88,9 +88,11 @@ void handle_child_termination(const int reader, const int writer)
     {
         // Send a signal to writer, since it is waiting for keyboard input and cannot exit on its own.
         kill(writer, SIGTERM);
+        wait(NULL);
     }
     else if (child == writer)
     {
         // On the other hand, reader can exit on its own so do nothing.
+        wait(NULL);
     }
 }
