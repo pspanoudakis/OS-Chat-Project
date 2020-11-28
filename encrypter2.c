@@ -49,7 +49,7 @@ int main(void)
         decr_args[9] = NULL;
 
         // The clone replaces itself with decrypt
-        if ( execvp("/home/pavlos/vsc/c/OSProject/decrypt", decr_args) == -1 )
+        if ( execvp("decrypt", decr_args) == -1 )
         {
             perror("Failed to execute decrypt. Aborting.\n");
             exit(EXIT_FAILURE);
@@ -73,7 +73,7 @@ int main(void)
             args[5] = NULL;
 
             // The clone replaces itself with encrypt
-            if ( execvp("/home/pavlos/vsc/c/OSProject/encrypt", args) == -1 )
+            if ( execvp("encrypt", args) == -1 )
             {
                 perror("Failed to execute encrypt. Aborting.\n");
                 exit(EXIT_FAILURE);
