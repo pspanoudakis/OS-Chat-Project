@@ -15,6 +15,7 @@
 #include <sys/shm.h>
 #include <signal.h>
 #include <openssl/md5.h>
+#include <errno.h>
 
 #include "utils.h"
 
@@ -29,9 +30,24 @@ void sigterm_handler(int signum)
 {
     free(msg);
     free(ops);
-    shmdt(shmem);
-    shmctl(shmid, IPC_RMID, 0);
-    semctl(semid, 0, IPC_RMID, 0);
+    struct shmid_ds temp;
+
+    if (shmdt(shmem) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }    
+    
+    if (shmctl(shmid, IPC_STAT, &temp) != -1)
+    {
+        if (temp.shm_nattch == 0)
+        // Delete only if there are no attached pointers to shared memory left
+        {
+            if ( shmctl(shmid, IPC_RMID, 0) == -1 ){ printf("Deleting SHM failed\n"); }
+        }
+    }
+
+    if ( (semctl(semid, 0, IPC_RMID, 0) == -1) )
+    { 
+        if(errno != EINVAL) { printf("Deleting semaphore failed\n"); }  
+    }
+    
     exit(EXIT_SUCCESS);
 }
 

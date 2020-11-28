@@ -16,6 +16,7 @@
 #include <sys/shm.h>
 #include <signal.h>
 #include <openssl/md5.h>
+#include <errno.h>
 
 #include "utils.h"
 
@@ -29,12 +30,43 @@ int semsrcid, shmsrcid, semdestid, shmdestid;
 void quit(int signum)
 {
     free(ops);
-    shmdt(shmdest);
-    shmctl(shmsrcid, IPC_RMID, 0);
-    semctl(semsrcid, 0, IPC_RMID, 0);
-    shmdt(shmsrc);    
-    shmctl(shmdestid, IPC_RMID, 0);
-    semctl(semdestid, 0, IPC_RMID, 0);    
+    struct shmid_ds temp;
+
+    if (shmdt(shmsrc) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }    
+    
+    if (shmctl(shmsrcid, IPC_STAT, &temp) == -1) 
+    {
+        exit_failure("Failed to control shared memory\n");
+    }
+    else
+    {
+        if (temp.shm_nattch == 0)
+        // Delete only if there are no attached pointers to shared memory left
+        {
+            if ( shmctl(shmsrcid, IPC_RMID, 0) == -1 ){ exit_failure("Deleting SHM failed\n"); }
+        }
+    }
+    
+    if (shmdt(shmdest) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }    
+    
+    if (shmctl(shmdestid, IPC_STAT, &temp) == -1) 
+    {
+        exit_failure("Failed to control shared memory\n");
+    }
+    else
+    {
+        if (temp.shm_nattch == 0)
+        // Delete only if there are no attached pointers to shared memory left
+        {
+            if ( shmctl(shmdestid, IPC_RMID, 0) == -1 ){ printf("Deleting SHM failed\n"); }            
+        }
+    }
+    
+    if ( (semctl(semdestid, 0, IPC_RMID, 0) == -1) )
+    { 
+        if(errno != EINVAL){ printf("Deleting semaphore failed\n"); }  
+    }
+    
     exit(EXIT_SUCCESS);
 }
 

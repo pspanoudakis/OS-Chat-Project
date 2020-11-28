@@ -18,6 +18,12 @@
 
 #include "utils.h"
 
+void exit_failure(const char *msg)
+{
+    perror(msg);
+    exit(EXIT_FAILURE);
+}
+
 /* To be used in case a malloc call fails. */
 void malloc_error_exit(void)
 {
