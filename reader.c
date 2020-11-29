@@ -27,13 +27,15 @@ struct sembuf *ops;
 & deleting semaphores and shared memory segments) */
 void quit(int signum)
 {
-    struct shmid_ds temp;
+    struct shmid_ds temp;                                   // Used to get Shared Memory info
 
+    // Freeing allocated memory
     free(ops);
 
+    // Detaching pointer to shared memory
     if (shmdt(shmem) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }    
     
-    if (shmctl(shmid, IPC_STAT, &temp) != -1)
+    if (shmctl(shmid, IPC_STAT, &temp) != -1)               // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -47,7 +49,6 @@ void quit(int signum)
 
 int main(int argc, char const *argv[])
 {
-    pid_t child_id;
     union semun args;
 
     if (argc < 3)

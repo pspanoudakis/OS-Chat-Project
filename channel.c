@@ -29,16 +29,15 @@ int semsrcid, shmsrcid, semdestid, shmdestid;
 & deleting semaphores and shared memory segments) */
 void quit(int signum)
 {
+    // Freeing allocated memory
     free(ops);
-    struct shmid_ds temp;
 
+    struct shmid_ds temp;                                               // Used to get Shared Memory info
+
+    // Detaching pointer to shared memory for reading
     if (shmdt(shmsrc) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }    
     
-    if (shmctl(shmsrcid, IPC_STAT, &temp) == -1) 
-    {
-        exit_failure("Failed to control shared memory\n");
-    }
-    else
+    if (shmctl(shmsrcid, IPC_STAT, &temp) != -1)                        // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -47,13 +46,10 @@ void quit(int signum)
         }
     }
     
+    // Detaching pointer to shared memory for writting
     if (shmdt(shmdest) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }    
     
-    if (shmctl(shmdestid, IPC_STAT, &temp) == -1) 
-    {
-        exit_failure("Failed to control shared memory\n");
-    }
-    else
+    if (shmctl(shmdestid, IPC_STAT, &temp) != -1)                       // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -62,8 +58,10 @@ void quit(int signum)
         }
     }
     
+    // Deleting semaphore for destination shared memory (if it has not been deleted already)
     if ( (semctl(semdestid, 0, IPC_RMID, 0) == -1) )
-    { 
+    {
+        // An EINVAL error is expected if the semaphore has been deleted
         if(errno != EINVAL){ printf("Deleting semaphore failed\n"); }  
     }
     
@@ -72,9 +70,7 @@ void quit(int signum)
 
 int main(int argc, char const *argv[])
 {
-    pid_t child_id;
     union semun args;
-    char* temp;
 
     // To terminate smoothly if a SIGTERM is sent
     signal(SIGTERM, quit);    

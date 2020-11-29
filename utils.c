@@ -1,5 +1,5 @@
 /* 
- * File: utils.h
+ * File: utils.c
  * Pavlos Spanoudakis (sdi1800184)
  * 
  * Contains implementations for useful and widely used functions.
@@ -18,6 +18,7 @@
 
 #include "utils.h"
 
+/* To be used for exiting in case of unexpected error. */
 void exit_failure(const char *msg)
 {
     perror(msg);

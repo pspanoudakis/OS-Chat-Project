@@ -28,13 +28,15 @@ int semsrcid, shmsrcid, semdestid, shmdestid;
 & deleting semaphores and shared memory segments) */
 void quit(int signum)
 {
-    struct shmid_ds temp;
+    struct shmid_ds temp;                                       // Used to get Shared Memory info
 
+    // Freeing allocated memory
     free(ops);
 
+    // Detaching pointer to shared memory for reading
     if (shmdt(shmsrc) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }
     
-    if (shmctl(shmsrcid, IPC_STAT, &temp) != -1)
+    if (shmctl(shmsrcid, IPC_STAT, &temp) != -1)                // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -43,6 +45,7 @@ void quit(int signum)
         }
     }
     
+    // Detaching pointer to shared memory for writting
     if (shmdt(shmdest) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }    
     
     if (shmctl(shmdestid, IPC_STAT, &temp) != -1)
@@ -53,9 +56,11 @@ void quit(int signum)
             if ( shmctl(shmdestid, IPC_RMID, 0) == -1 ){ exit_failure("Deleting SHM failed\n"); }
         }
     }
-    
+
+    // Deleting semaphore for destination shared memory (if it has not been deleted already)
     if ( (semctl(semdestid, 0, IPC_RMID, 0) == -1) )
-    { 
+    {
+        // An EINVAL error is expected if the semaphore has been deleted
         if(errno != EINVAL) { printf("Deleting semaphore failed\n"); }  
     }
 
@@ -64,7 +69,6 @@ void quit(int signum)
 
 int main(int argc, char const *argv[])
 {
-    pid_t child_id;
     union semun args;
     char *hashed;
 
