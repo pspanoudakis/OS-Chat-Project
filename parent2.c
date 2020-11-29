@@ -92,7 +92,7 @@ void handle_child_termination(const int reader, const int writer)
     }
     else if (child == writer)
     {
-        // On the other hand, reader can exit on its own so do nothing.
+        // On the other hand, reader can exit on its own so just wait for it to finish.
         wait(NULL);
     }
 }

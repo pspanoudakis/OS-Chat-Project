@@ -28,10 +28,13 @@ char *msg, *shmem;
 & deleting semaphores and shared memory segments) */
 void sigterm_handler(int signum)
 {
+    // Freeing allocated memory
     free(msg);
     free(ops);
-    struct shmid_ds temp;
 
+    struct shmid_ds temp;                                   // Used to get Shared Memory info
+
+    // Detaching pointer to shared memory
     if (shmdt(shmem) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }    
     
     if (shmctl(shmid, IPC_STAT, &temp) != -1)               // Getting Shared Memory info
@@ -43,9 +46,11 @@ void sigterm_handler(int signum)
         }
     }
 
+    // Deleting semaphore (if it has not been deleted already)
     if ( (semctl(semid, 0, IPC_RMID, 0) == -1) )
-    { 
-        if(errno != EINVAL) { printf("Deleting semaphore failed\n"); }  
+    {
+        // An EINVAL error is expected if the semaphore has been deleted
+        if(errno != EINVAL) { printf("Deleting semaphore failed\n"); }
     }
     
     exit(EXIT_SUCCESS);
@@ -53,7 +58,6 @@ void sigterm_handler(int signum)
 
 int main(int argc, char const *argv[])
 {
-    pid_t child_id;
     union semun args;
 
     if (argc < 3)

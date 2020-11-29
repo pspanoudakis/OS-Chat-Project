@@ -28,13 +28,15 @@ int semsrcid, shmsrcid, semdestid, shmdestid, resendsemid, resendshmid, sendback
 & deleting semaphores and shared memory segments) */
 void quit(int signum)
 {
-    struct shmid_ds temp;
+    struct shmid_ds temp;                                       // Used to get Shared Memory info
 
+    // Freeing allocated memory
     free(ops);
 
+    // Detaching pointer to shared memory for reading
     if (shmdt(shmsrc) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }    
     
-    if (shmctl(shmsrcid, IPC_STAT, &temp) != -1) 
+    if (shmctl(shmsrcid, IPC_STAT, &temp) != -1)                // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -43,13 +45,10 @@ void quit(int signum)
         }
     }
     
+    // Detaching pointer to shared memory for reading
     if (shmdt(shmdest) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }    
     
-    if (shmctl(shmdestid, IPC_STAT, &temp) == -1) 
-    {
-        exit_failure("Failed to control shared memory\n");
-    }
-    else
+    if (shmctl(shmdestid, IPC_STAT, &temp) != -1)               // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -63,9 +62,10 @@ void quit(int signum)
         if(errno != EINVAL) { printf("Decrypt: Deleting semaphore failed\n"); }  
     }
     
+    // Detaching pointer to shared memory for sending retransmission requests
     if (shmdt(resendshm) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }   
     
-    if (shmctl(resendshmid, IPC_STAT, &temp) != -1)
+    if (shmctl(resendshmid, IPC_STAT, &temp) != -1)             // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -74,9 +74,10 @@ void quit(int signum)
         }
     }
     
+    // Detaching pointer to shared memory for handling retransmission requests
     if (shmdt(sendbackshm) == -1) { exit_failure("Could not detach pointer to shared memory.\n"); }  
     
-    if (shmctl(sendbackshmid, IPC_STAT, &temp) != -1) 
+    if (shmctl(sendbackshmid, IPC_STAT, &temp) != -1)           // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
@@ -90,7 +91,6 @@ void quit(int signum)
 
 int main(int argc, char const *argv[])
 {
-    pid_t child_id;
     union semun args;
 
     // To terminate smoothly if a SIGTERM is sent
