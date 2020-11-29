@@ -34,7 +34,7 @@ void sigterm_handler(int signum)
 
     if (shmdt(shmem) == -1) { exit_failure("Could not attach pointer to shared memory.\n"); }    
     
-    if (shmctl(shmid, IPC_STAT, &temp) != -1)
+    if (shmctl(shmid, IPC_STAT, &temp) != -1)               // Getting Shared Memory info
     {
         if (temp.shm_nattch == 0)
         // Delete only if there are no attached pointers to shared memory left
