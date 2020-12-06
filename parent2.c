@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <sys/ipc.h>
 
 #define WRITER_SHM_DEST_KEY "2031"
 #define WRITTER_SEM_DEST_KEY "2018"
@@ -21,7 +22,7 @@ void handle_child_termination(const int reader, const int writer);
 int main(void)
 {
     int writer_child, reader_child;
-    writer_child = fork();                  // creating a child clone to execute writer
+    writer_child = fork();                          // creating a child clone to execute writer
     char* args[4];
     if (writer_child == -1)
     {
@@ -30,9 +31,18 @@ int main(void)
     }
     else if (writer_child == 0)
     {
-        args[0] = "writer";                 // setting up required arguments
-        args[1] = "2031";
-        args[2] = "2018";
+        args[0] = "writer";                         // Setting up arguments for `writer`
+
+        key_t key = ftok(".", 8);
+        char key_string[2][10];
+
+        sprintf(key_string[0], "%d", key);          // setting up shared memory key argument
+        args[1] = key_string[0];
+
+        key = ftok(".", 81);                        // setting up semaphore key argument
+        sprintf(key_string[1], "%d", key);
+        args[2] = key_string[1];
+
         args[3] = NULL;
 
         // The clone replaces itself with writer
@@ -44,7 +54,7 @@ int main(void)
     }
     else
     {
-        reader_child = fork();              // creating a child clone to execute reader
+        reader_child = fork();                      // creating a child clone to execute reader
         if (reader_child == -1)
         {
             perror("Could not fork 2");
@@ -52,9 +62,18 @@ int main(void)
         }
         else if (reader_child == 0)
         {
-            args[0] = "reader";             // setting up required arguments
-            args[1] = "2032";
-            args[2] = "2017";
+            args[0] = "reader";                     // Setting up arguments for `reader`
+
+            key_t key = ftok(".", 7);
+            char key_string[2][10];
+
+            sprintf(key_string[0], "%d", key);      // setting up shared memory key argument
+            args[1] = key_string[0];
+
+            key = ftok(".", 71);                    // setting up semaphore key argument
+            sprintf(key_string[1], "%d", key);
+            args[2] = key_string[1];
+
             args[3] = NULL;
 
             // The clone replaces itself with reader

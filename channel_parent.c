@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <sys/ipc.h>
 
 #define P1_SHM_SOURCE_KEY "2028"
 #define P1_SEM_SOURCE_KEY "2021"
@@ -40,12 +41,27 @@ int main(int argc, char const *argv[])
     }
     else if (p1_channel == 0)
     {
-        args[0] = "channel";                            // setting up required arguments
-        args[1] = P1_SEM_SOURCE_KEY;
-        args[2] = P1_SEM_DEST_KEY;
-        args[3] = P1_SHM_SOURCE_KEY;
-        args[4] = P1_SHM_DEST_KEY;
+        args[0] = "channel";                            // Setting up arguments for `channel`
+        char key_string[4][12];
+
+        key_t key = ftok(".", 31);
+        sprintf(key_string[0], "%d", key);
+        args[1] = key_string[0];
+
+        key = ftok(".", 51);                
+        sprintf(key_string[1], "%d", key);
+        args[2] = key_string[1];
+
+        key = ftok(".", 3);                
+        sprintf(key_string[2], "%d", key);
+        args[3] = key_string[2];
+
+        key = ftok(".", 5);                
+        sprintf(key_string[3], "%d", key);
+        args[4] = key_string[3];
+
         args[5] = argv[1];
+
         args[6] = NULL;
 
         // The clone replaces itself with channel
@@ -65,12 +81,27 @@ int main(int argc, char const *argv[])
         }
         else if (p2_channel == 0)
         {
-            args[0] = "channel";                        // setting up required arguments
-            args[1] = P2_SEM_SOURCE_KEY;
-            args[2] = P2_SEM_DEST_KEY;
-            args[3] = P2_SHM_SOURCE_KEY;
-            args[4] = P2_SHM_DEST_KEY;
+            args[0] = "channel";                        // Setting up arguments for `channel`
+            char key_string[4][12];
+
+            key_t key = ftok(".", 61);
+            sprintf(key_string[0], "%d", key);
+            args[1] = key_string[0];
+
+            key = ftok(".", 41);                
+            sprintf(key_string[1], "%d", key);
+            args[2] = key_string[1];
+
+            key = ftok(".", 6);                
+            sprintf(key_string[2], "%d", key);
+            args[3] = key_string[2];
+
+            key = ftok(".", 4);                
+            sprintf(key_string[3], "%d", key);
+            args[4] = key_string[3];
+
             args[5] = argv[1];
+
             args[6] = NULL;
 
             // The clone replaces itself with channel
