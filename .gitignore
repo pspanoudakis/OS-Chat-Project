@@ -1,4 +1,7 @@
-.vscode/*
-*.code-workspace
-
-*.o
+*
+!.gitignore
+!Makefile
+!README.md
+!osproject.png
+!src/*
+!build/*

@@ -66,37 +66,37 @@ $(CHAN_PAR): $(CHAN_PAR_OBJ)
 $(CHAN): $(CHAN_OBJ)
 	$(CC) -o $(CHAN) $(CHAN_OBJ) $(UTIL_OBJ) $(LDLIBS)
 
-$(UTIL_OBJ):
+$(UTIL_OBJ): src/utils.c
 	$(CC) -c -o $(UTIL_OBJ) src/utils.c
 
-$(CHAN_OBJ):
+$(CHAN_OBJ): src/channel.c
 	$(CC) -c -o $(CHAN_OBJ) src/channel.c
 
-$(CHAN_PAR_OBJ):
+$(CHAN_PAR_OBJ): src/channel_parent.c
 	$(CC) $(FLAG) -c -o $(CHAN_PAR_OBJ) src/channel_parent.c
 
-$(P1_OBJ):
+$(P1_OBJ): src/parent1.c
 	$(CC) -c -o $(P1_OBJ) src/parent1.c
 
-$(P2_OBJ):
+$(P2_OBJ): src/parent2.c
 	$(CC) -c -o $(P2_OBJ) src/parent2.c
 
-$(ENC1_OBJ):
+$(ENC1_OBJ): src/encrypter1.c
 	$(CC) -c -o $(ENC1_OBJ) src/encrypter1.c
 
-$(ENC2_OBJ):
+$(ENC2_OBJ): src/encrypter2.c
 	$(CC) -c -o $(ENC2_OBJ) src/encrypter2.c
 
-$(ENCR_OBJ):
+$(ENCR_OBJ): src/encrypt.c
 	$(CC) -c -o $(ENCR_OBJ) src/encrypt.c
 
-$(DECR_OBJ):
+$(DECR_OBJ): src/decrypt.c
 	$(CC) -c -o $(DECR_OBJ) src/decrypt.c
 
-$(WRIT_OBJ):
+$(WRIT_OBJ): src/writer.c
 	$(CC) -c -o $(WRIT_OBJ) src/writer.c
 
-$(READ_OBJ):
+$(READ_OBJ): src/reader.c
 	$(CC) -c -o $(READ_OBJ) src/reader.c
 
 clean:

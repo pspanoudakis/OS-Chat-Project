@@ -46,7 +46,7 @@ int main(void)
         args[3] = NULL;
 
         // The clone replaces itself with writer
-        if ( execvp("writer", args) == -1)
+        if ( execvp("./writer", args) == -1)
         {
             perror("Failed to execute writer. Aborting.\n");
             exit(EXIT_FAILURE);
@@ -77,7 +77,7 @@ int main(void)
             args[3] = NULL;
 
             // The clone replaces itself with reader
-            if ( execvp("reader", args) )
+            if ( execvp("./reader", args) )
             {
                 perror("Failed to execute reader. Aborting.\n");
                 exit(EXIT_FAILURE);

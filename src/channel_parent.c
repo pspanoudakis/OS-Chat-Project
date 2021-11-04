@@ -65,7 +65,7 @@ int main(int argc, char const *argv[])
         args[6] = NULL;
 
         // The clone replaces itself with channel
-        if ( execvp("channel", args) == -1 )
+        if ( execvp("./channel", args) == -1 )
         {
             perror("Failed to execute channel (1). Aborting.\n");
             exit(EXIT_FAILURE);
@@ -105,7 +105,7 @@ int main(int argc, char const *argv[])
             args[6] = NULL;
 
             // The clone replaces itself with channel
-            if ( execvp("channel", args) == -1 )
+            if ( execvp("./channel", args) == -1 )
             {
                 perror("Failed to execute channel (2). Aborting.\n");
                 exit(EXIT_FAILURE);
