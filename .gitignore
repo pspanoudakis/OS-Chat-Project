@@ -1,0 +1,7 @@
+*
+!.gitignore
+!Makefile
+!README.md
+!osproject.png
+!src/*
+!build/*

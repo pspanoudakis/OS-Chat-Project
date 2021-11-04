@@ -5,32 +5,34 @@ CC = gcc
 FLAG = -Wno-discarded-qualifiers
 LDLIBS = -lcrypto
 
-# Source and Executable files
-UTIL_OBJ = utils.o
-CHAN_OBJ = channel.o
+# Objective files
+UTIL_OBJ = build/utils.o
+CHAN_OBJ = build/channel.o
+CHAN_PAR_OBJ = build/channel_parent.o
+P1_OBJ = build/parent1.o
+P2_OBJ = build/parent2.o
+ENC1_OBJ = build/encrypter1.o
+ENC2_OBJ = build/encrypter2.o
+ENCR_OBJ = build/encrypt.o
+DECR_OBJ = build/decrypt.o
+WRIT_OBJ = build/writer.o
+READ_OBJ = build/reader.o
+
+OBJS =  $(CHAN_PAR_OBJ) $(CHAN_OBJ) $(P1_OBJ) $(P2_OBJ) $(WRIT_OBJ) $(READ_OBJ) $(ENC1_OBJ) $(ENC2_OBJ) $(ENCR_OBJ) $(DECR_OBJ) $(UTIL_OBJ)
+
+# Executables
 CHAN = channel
-CHAN_PAR_OBJ = channel_parent.o
-CHAN_PAR_SRC = channel_parent.c
 CHAN_PAR = channel_parent
 P1 = parent1
-P1_OBJ = parent1.o
 P2 = parent2
-P2_OBJ = parent2.o
 ENC1 = encrypter1
-ENC1_OBJ = encrypter1.o
 ENC2 = encrypter2
-ENC2_OBJ = encrypter2.o
 ENCR = encrypt
-ENCR_OBJ = encrypt.o
 DECR = decrypt
-DECR_OBJ = decrypt.o
 WRIT = writer
-WRIT_OBJ = writer.o
 READ = reader
-READ_OBJ = reader.o
 
 EXECS = $(P1) $(P2) $(WRIT) $(READ) $(CHAN_PAR) $(CHAN) $(ENC1) $(ENC2) $(ENCR) $(DECR)
-OBJS =  $(CHAN_PAR_OBJ) $(CHAN_OBJ) $(P1_OBJ) $(P2_OBJ) $(WRIT_OBJ) $(READ_OBJ) $(ENC1_OBJ) $(ENC2_OBJ) $(ENCR_OBJ) $(DECR_OBJ) $(UTIL_OBJ)
 
 all: $(EXECS)
 
@@ -61,11 +63,41 @@ $(DECR): $(DECR_OBJ)
 $(CHAN_PAR): $(CHAN_PAR_OBJ)
 	$(CC) -o $(CHAN_PAR) $(CHAN_PAR_OBJ)
 
-$(CHAN_PAR_OBJ):
-	$(CC) $(FLAG) -c -o $(CHAN_PAR_OBJ) $(CHAN_PAR_SRC)
-
 $(CHAN): $(CHAN_OBJ)
 	$(CC) -o $(CHAN) $(CHAN_OBJ) $(UTIL_OBJ) $(LDLIBS)
+
+$(UTIL_OBJ): src/utils.c
+	$(CC) -c -o $(UTIL_OBJ) src/utils.c
+
+$(CHAN_OBJ): src/channel.c
+	$(CC) -c -o $(CHAN_OBJ) src/channel.c
+
+$(CHAN_PAR_OBJ): src/channel_parent.c
+	$(CC) $(FLAG) -c -o $(CHAN_PAR_OBJ) src/channel_parent.c
+
+$(P1_OBJ): src/parent1.c
+	$(CC) -c -o $(P1_OBJ) src/parent1.c
+
+$(P2_OBJ): src/parent2.c
+	$(CC) -c -o $(P2_OBJ) src/parent2.c
+
+$(ENC1_OBJ): src/encrypter1.c
+	$(CC) -c -o $(ENC1_OBJ) src/encrypter1.c
+
+$(ENC2_OBJ): src/encrypter2.c
+	$(CC) -c -o $(ENC2_OBJ) src/encrypter2.c
+
+$(ENCR_OBJ): src/encrypt.c
+	$(CC) -c -o $(ENCR_OBJ) src/encrypt.c
+
+$(DECR_OBJ): src/decrypt.c
+	$(CC) -c -o $(DECR_OBJ) src/decrypt.c
+
+$(WRIT_OBJ): src/writer.c
+	$(CC) -c -o $(WRIT_OBJ) src/writer.c
+
+$(READ_OBJ): src/reader.c
+	$(CC) -c -o $(READ_OBJ) src/reader.c
 
 clean:
 	rm $(EXECS) $(OBJS)
