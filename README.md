@@ -1,27 +1,22 @@
 ### Pavlos Spanoudakis (sdi1800184)
-## Project 1 on Operating Systems class
-## Documentation & Additional comments
+## Project 1 on Operating Systems course
 ***
-### Project structure
-- `utils.c` & `utils.h` : Implementation & definition for useful functions, as well as some `#define` commands that may be modified (shared memory size, permissions, termination message)
-- `parent1.c` & `parent2.c` : Parent processes of P1 and P2 respectively. 
-- `writer.c` : Used by P1 and P2, to get a new message from the command line and send it.
-- `reader.c` : Also used by P1 and P2. It is the final "destination" of a message, where it is displayed in the command line.
-- `encrypter1.c` and `encrypter2.c` : Parent processes for ENC1 and ENC2 respectively.
-- `encrypt.c` : Used in ENC1 and ENC2. The main task of it is to get a message, concatenate it with the respective hash code and forward it to the channel.
-- `decrypt.c` : Also used in ENC1 and ENC2. Mainly used to validate a message using the hash code and forward it to its final destination (either P1 or P2).
-- `channel_parent.c` : Parent process of CHAN.
-- `channel.c` : The "real" channel, where noise may by added to a message.
+This is a project for the Winter 2020 Operating Systems course in [DIT@UoA](https://www.di.uoa.gr/en).
 
-### Logic & Design
+It focuses on creating a **two-way messaging architecture**, built on **processes** which communicate via **shared memory segments**, while avoiding any deadlocks/race conditions by properly using **System V semaphores**. In short, there are the following types of processes:
+- `writer`, which reads messages from `stdin`.
+- `reader`, which displays messages to `stdout`.
+- `parent{1|2}`, which creates `writer` & `reader` processes and is, essentially, the "end-user" process.
+- `encrypt`, which calculates a checksum for a message, attaches it to it and forwards it.
+- `decrypt`, which receives a message with an attached checksum. If the checksum is valid, it forwards the message, otherwise it notifies for an invalid message, asking for retransmission.
+- `encrypter{1|2}`, which creates `encrypt` & `decrypt` processes to serve one of the two ends.
+- `channel`, which forwards messages from `encrypt` to `decrypt` processes (or possibly, from from `decrypt` to `decrypt`). The messages may be corrupted with noise by the `channel`.
+- `channel_parent`, which creates two `channel` processes (with different arguments) in order to make the architecture two-way.
+
+### Logic & Execution flow
 The general idea is to create 2 identical & independent paths: one to send a message from P1 to P2, and another to do the opposite. 
 
 ![Diagram](osproject.png)
-
-There are 5 parent processes to be executed:
-- `parent1` and `parent2`, which call `writer` & `reader`
-- `encrypter1` and `encypter2` which call `encrypt` & `decrypt`
-- `channel_parent`, which calls `channel` 2 times (with different arguments)
 
 After the parent processes create their children using `execvp`, they let them do the real job and wait for them to finish.  
 Each of the edges in the above diagram is created using a shared memory segment and 2 semaphores, to sychronize the producer and the consumer properly. Each process acts both as a **consumer** and as a **producer** (with the exception of `writer`, who "consumes" from `stdin` and `reader` whose "products" are directed to `stdout`).  
@@ -59,18 +54,31 @@ After P2 `reader` terminates, `parent2` is **awaken** and sends a `SIGTERM` at `
 Each process that is about to terminate also attempts to delete the semaphore that handles the shared memory for **writing**.  
 At the same time, the process that **reads** from that segment checks if a semaphore operation **fails**, which will happen if the semaphore has been deleted. When the operation fails, this process is also terminated smoothly (freeing any allocated memory, detaching pointers to shared memory segments and deleting semaphores) and will "inform" the next one in the exact same way.
 
+### Project structure
+- `utils.c` & `utils.h` : Implementation & definition for useful functions, as well as some `#define` commands that may be modified (shared memory size, permissions, termination message)
+- `parent1.c` & `parent2.c` : Parent processes of P1 and P2 respectively. 
+- `writer.c` : Used by P1 and P2, to get a new message from the command line and send it.
+- `reader.c` : Also used by P1 and P2. It is the final "destination" of a message, where it is displayed in the command line.
+- `encrypter1.c` and `encrypter2.c` : Parent processes for ENC1 and ENC2 respectively.
+- `encrypt.c` : Used in ENC1 and ENC2. The main task of it is to get a message, concatenate it with the respective hash code and forward it to the channel.
+- `decrypt.c` : Also used in ENC1 and ENC2. Mainly used to validate a message using the hash code and forward it to its final destination (either P1 or P2).
+- `channel_parent.c` : Parent process of CHAN.
+- `channel.c` : The "real" channel, where noise may by added to a message.
+
 ### Compiling & Executing
-Running `make` will create all the needed executables.  
+- Running `make` will create all the needed executables.  
 gcc normally displays a warning (`"assignment discards ‘const’ qualifier"`) 2 times while compiling `channel_parent.c`. It is disabled in the Makefile, but can easily be enabled back.
 
-`parent1`, `parent2` and `channel_parent` should be executed first, in different terminals (in any order). Then `encrypter1` and `encrypter2` need to be executed. They should **ALWAYS** be executed last, because they do not initiallize the semaphores they use themselves. `channel_parent`, `encrypter1` and `encrypter2` could be executed in one terminal (in backround) but it would be more preferable to use different terminals since `channel` processes print message modification messages, while `encrypt` and `decrypt` print retransmission messages.  
-`channel_parent` needs to be executed along with the possibility argument, otherwise it will stop.
+- `parent1`, `parent2` and `channel_parent` should be executed first, in different terminals (in any order).
+- Then `encrypter1` and `encrypter2` need to be executed. They should **ALWAYS** be executed last, because they do not initiallize the semaphores they use themselves.
+- `channel_parent`, `encrypter1` and `encrypter2` could be executed in one terminal (in backround) but it would be more preferable to use different terminals since `channel` processes print message modification messages, while `encrypt` and `decrypt` print retransmission messages.  
+`channel_parent` needs to be provided with a modification probability argument (e.g. `channel_parent 28` for a 28% probability of modifying messages), otherwise it will stop.
 
-After all the above have been executed, just type anything in `parent1` or `parent2` terminal and it will show up in the other's. Note that a message may be modified more than 1 time in a row.
+- After all the above have been executed, just type anything in `parent1` or `parent2` terminal and it will show up in the other's. Note that a message may be modified **more than 1 time in a row**.
 
-To terminate, type "TERM" (or whatever exit message has been defined in `utils.h`), either in `parent1` or `parent2` terminal, and everything will stop.
+- To terminate, type `TERM` (or whatever exit message has been defined in `utils.h`), either in `parent1` or `parent2` terminal, and everything will stop.
 
-To delete the executables and objective files, run `make clean`.
+- To delete the executables and objective files, run `make clean`.
 
 ### Performance, Resource Handling & other details
 Messages should appear immediately in the destination terminal, even if a retransmission has taken place (unless the possibility for modification in channel is very big). You can check for output messages in `encrypter1` and `encrypter2` terminals to find out.
